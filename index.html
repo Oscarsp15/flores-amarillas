@@ -149,7 +149,13 @@
   }
   .letter.show .letter-paper, .card.show .card-paper { transform: none; }
   .letter-head, .card-title { font-family: 'Great Vibes', cursive; font-size: 38px; color: #7a4a12; text-align: center; margin-bottom: 16px; }
-  .letter-body, .card-body { font-size: 19px; line-height: 1.75; color: #4a3418; white-space: pre-wrap; min-height: 150px; opacity: 0; transition: opacity .35s ease; }
+  .letter-body, .card-body { font-size: 19px; line-height: 1.75; color: #4a3418; white-space: pre-wrap; min-height: 150px; opacity: 0; transition: opacity .35s ease, transform .35s ease; }
+  .letter-paper.turning { animation: paperFlip .5s ease; }
+  @keyframes paperFlip {
+    0% { box-shadow: 0 30px 90px rgba(0,0,0,.65), inset 0 0 70px rgba(180,140,70,.18); }
+    50% { box-shadow: 0 30px 90px rgba(0,0,0,.85), inset -34px 0 60px rgba(120,90,40,.38); }
+    100% { box-shadow: 0 30px 90px rgba(0,0,0,.65), inset 0 0 70px rgba(180,140,70,.18); }
+  }
   .letter-nav { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 24px; }
   .letter-nav button {
     width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
@@ -1517,36 +1523,51 @@
     ctx.fill(); ctx.restore();
   }
 
-  function drawHead(f) {
-    const bloom = smooth(0.4, 1, f.growth);
-    if (bloom <= 0.001) return;
-    const pt = stemPoint(f, f.growth);
-    const tilt = Math.sin(t * f.speed + f.phase) * 0.1 + wind * f.sizeF * 0.18;
-    ctx.save(); ctx.translate(pt.x, pt.y); ctx.rotate(tilt);
-    const R = f.petalLen * bloom;
-    const gl = ctx.createRadialGradient(0, 0, 0, 0, 0, R * 2.3);
+  function buildHeadSprite(f) {
+    const R = f.petalLen;
+    const D = Math.max(8, Math.ceil(R * 5.2));
+    const c = document.createElement("canvas");
+    c.width = D; c.height = D;
+    const g = c.getContext("2d");
+    const cx = D / 2, cy = D / 2;
+    const gl = g.createRadialGradient(cx, cy, 0, cx, cy, R * 2.3);
     gl.addColorStop(0, "rgba(255,226,132,0.34)"); gl.addColorStop(1, "rgba(255,226,132,0)");
-    ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(0, 0, R * 2.3, 0, 6.2832); ctx.fill();
+    g.fillStyle = gl; g.beginPath(); g.arc(cx, cy, R * 2.3, 0, 6.2832); g.fill();
     const n = f.petals;
     for (let i = 0; i < n; i++) {
       const lenVar = 0.86 + 0.14 * Math.sin(i * 2.3 + f.phase);
-      const a = (i / n) * 6.2832 + f.rot + Math.sin(t * 1.2 + i * 0.7) * 0.03 + wind * 0.15;
-      ctx.save(); ctx.rotate(a);
-      const grad = ctx.createLinearGradient(0, 0, 0, -R * 1.15 * lenVar);
+      const a = (i / n) * 6.2832 + f.rot;
+      g.save(); g.translate(cx, cy); g.rotate(a);
+      const grad = g.createLinearGradient(0, 0, 0, -R * 1.15 * lenVar);
       grad.addColorStop(0, f.petalDark); grad.addColorStop(0.55, f.petalMid); grad.addColorStop(1, f.petalLight);
-      ctx.fillStyle = grad;
-      ctx.beginPath(); ctx.ellipse(0, -R * 0.62 * lenVar, f.petalW * bloom, R * 0.62 * lenVar, 0, 0, 6.2832); ctx.fill();
-      ctx.restore();
+      g.fillStyle = grad;
+      g.beginPath(); g.ellipse(0, -R * 0.62 * lenVar, f.petalW, R * 0.62 * lenVar, 0, 0, 6.2832); g.fill();
+      g.restore();
     }
-    const cr = f.petalW * 0.95 * bloom;
-    const cg = ctx.createRadialGradient(0, 0, 0, 0, 0, cr * 1.4);
+    const cr = f.petalW * 0.95;
+    const cg = g.createRadialGradient(cx, cy, 0, cx, cy, cr * 1.4);
     cg.addColorStop(0, f.center[0]); cg.addColorStop(0.6, f.center[1]); cg.addColorStop(1, f.center[2]);
-    ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(0, 0, cr * 1.25, 0, 6.2832); ctx.fill();
-    ctx.fillStyle = "rgba(255,214,128,0.55)";
+    g.fillStyle = cg; g.beginPath(); g.arc(cx, cy, cr * 1.25, 0, 6.2832); g.fill();
+    g.fillStyle = "rgba(255,214,128,0.55)";
     for (const d of f.dots) {
       const rr = d.r * cr;
-      ctx.beginPath(); ctx.arc(Math.cos(d.a) * rr, Math.sin(d.a) * rr, Math.max(0.5, cr * 0.12), 0, 6.2832); ctx.fill();
+      g.beginPath(); g.arc(cx + Math.cos(d.a) * rr, cy + Math.sin(d.a) * rr, Math.max(0.5, cr * 0.12), 0, 6.2832); g.fill();
     }
+    f.headSprite = c;
+    f.headHalf = D / 2;
+  }
+
+  function drawHead(f) {
+    const bloom = smooth(0.4, 1, f.growth);
+    if (bloom <= 0.001) return;
+    if (!f.headSprite) buildHeadSprite(f);
+    const pt = stemPoint(f, f.growth);
+    const tilt = Math.sin(t * f.speed + f.phase) * 0.1 + wind * f.sizeF * 0.18;
+    const half = f.headHalf * bloom;
+    ctx.save();
+    ctx.translate(pt.x, pt.y);
+    ctx.rotate(tilt);
+    ctx.drawImage(f.headSprite, -half, -half, half * 2, half * 2);
     ctx.restore();
   }
 
@@ -2139,7 +2160,7 @@
   }
 
   const letterEl = document.getElementById("letter");
-  let letterPage = 0, letterOpened = false, lastFocus = null;
+  let letterPage = 0, letterOpened = false, lastFocus = null, letterDir = 1;
 
   function buildLetter() {
     document.getElementById("letterHead").textContent = "Para " + GIFT.para;
@@ -2157,8 +2178,11 @@
   }
   function renderLetter() {
     const body = document.getElementById("letterBody");
+    const paper = letterEl.querySelector(".letter-paper");
+    if (paper) { paper.classList.remove("turning"); void paper.offsetWidth; paper.classList.add("turning"); }
     body.style.opacity = 0;
-    setTimeout(() => { body.textContent = GIFT.carta[letterPage]; body.style.opacity = 1; }, 180);
+    body.style.transform = `translateX(${letterDir * 26}px)`;
+    setTimeout(() => { body.textContent = GIFT.carta[letterPage]; body.style.opacity = 1; body.style.transform = "none"; }, 180);
     document.querySelectorAll("#letterDots i").forEach((el, i) => el.classList.toggle("active", i === letterPage));
     document.getElementById("letterPrev").style.visibility = letterPage > 0 ? "visible" : "hidden";
     document.getElementById("letterNext").style.visibility = letterPage < GIFT.carta.length - 1 ? "visible" : "hidden";
@@ -2168,7 +2192,12 @@
       setTimeout(() => { launchFireworks(12); showToast("has llegado al final... y esto es solo el comienzo"); }, 900);
     }
   }
-  function gotoPage(i) { letterPage = clamp(i, 0, GIFT.carta.length - 1); renderLetter(); }
+  function gotoPage(i) {
+    const ni = clamp(i, 0, GIFT.carta.length - 1);
+    letterDir = ni > letterPage ? 1 : (ni < letterPage ? -1 : letterDir);
+    letterPage = ni;
+    renderLetter();
+  }
   function openLetter() {
     letterOpened = true; letterBtn.classList.remove("beat");
     lastFocus = document.activeElement;
