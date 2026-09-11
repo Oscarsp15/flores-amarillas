@@ -23,8 +23,8 @@
   .hint {
     position: fixed; left: 50%; bottom: 30px; transform: translate(-50%, 10px);
     z-index: 6; pointer-events: none; text-align: center; max-width: 88vw;
-    font-family: system-ui, -apple-system, sans-serif;
-    font-size: clamp(13px, 3.4vw, 15px); letter-spacing: .3px;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: clamp(15px, 3.8vw, 18px); letter-spacing: .3px;
     color: rgba(255, 238, 196, .78); text-shadow: 0 1px 10px rgba(0,0,0,.85);
     opacity: 0; transition: opacity 1.5s ease, transform 1.5s ease;
   }
@@ -56,7 +56,7 @@
   .switch {
     width: 42px; height: 26px; border-radius: 999px; cursor: pointer;
     border: 1px solid rgba(255,220,150,.35); background: rgba(255,255,255,.06); color: rgba(255,236,190,.7);
-    display: grid; place-items: center; transition: all .3s ease;
+    display: grid; place-items: center; transition: all .3s ease; font-family: inherit; font-size: 15px;
   }
   .switch.on { background: rgba(255,215,120,.28); color: #fff4cf; box-shadow: 0 0 14px rgba(255,215,120,.5); }
   @keyframes pulse {
@@ -249,6 +249,7 @@
   }
   .surprise:hover { background: rgba(255,215,120,.16); }
   .surprise:active { transform: scale(.9); }
+  .surprise:not(.used) { animation: pulse 3s ease-in-out infinite; }
 
   @media (hover: hover) and (pointer: fine) {
     canvas { cursor: none; }
@@ -2050,8 +2051,8 @@
   const hintEl = document.getElementById("hint");
   const isTouch = window.matchMedia("(hover: none)").matches || window.innerWidth < 600;
   const HINTS = isTouch
-    ? ["toca la pantalla para plantar flores", "toca una estrella fugaz para pedir un deseo", "de noche, las estrellas rosadas guardan recuerdos", 'toca "abrir carta" cuando quieras']
-    : ["mueve el cursor para crear viento", "haz clic para plantar una flor", "toca una estrella fugaz para pedir un deseo", "de noche, las estrellas rosadas guardan recuerdos", 'toca "abrir carta" cuando quieras'];
+    ? ["toca la pantalla para plantar flores", "toca una estrella fugaz para pedir un deseo", "toca la estrella de abajo para una sorpresa", "de noche, las estrellas rosadas guardan recuerdos", 'toca "abrir carta" cuando quieras']
+    : ["mueve el cursor para crear viento", "haz clic para plantar una flor", "toca una estrella fugaz para pedir un deseo", "toca la estrella de abajo para una sorpresa", "de noche, las estrellas rosadas guardan recuerdos", 'toca "abrir carta" cuando quieras'];
   let hintIdx = 0, hintTimer = null, hintActive = true;
   function nextHint() {
     if (!hintActive || hintIdx >= HINTS.length) return;
@@ -2315,7 +2316,11 @@
       }
     }
 
-    plantFlower(e.clientX, e.clientY);
+    if (e.clientY >= horizon - 2) {
+      plantFlower(e.clientX, e.clientY);
+    } else {
+      addBurst(e.clientX, e.clientY, 7, 48, 45);
+    }
     if (!firstInteract) { firstInteract = true; stopHints(); }
   });
   window.addEventListener("touchmove", e => {
@@ -2463,7 +2468,7 @@
 
   const surpriseBtn = document.getElementById("surprise");
   surpriseBtn.addEventListener("pointerdown", e => e.stopPropagation());
-  surpriseBtn.addEventListener("click", e => { e.stopPropagation(); surprise(); });
+  surpriseBtn.addEventListener("click", e => { e.stopPropagation(); surpriseBtn.classList.add("used"); surprise(); });
 
   document.addEventListener("visibilitychange", () => { if (!document.hidden) last = performance.now(); });
 })();
