@@ -8,17 +8,41 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Great+Vibes&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta name="description" content="Un jardín interactivo de flores amarillas que florece para ti este 21 de septiembre.">
+<meta name="color-scheme" content="dark">
 <meta property="og:title" content="Para Ericka · Flores Amarillas">
 <meta property="og:description" content="Un jardín que florece para ti este 21 de septiembre.">
 <meta property="og:type" content="website">
+<meta property="og:locale" content="es_ES">
+<meta property="og:url" content="https://oscarsp15.github.io/flores-amarillas/">
 <meta property="og:image" content="https://oscarsp15.github.io/flores-amarillas/og-image.png">
+<meta property="og:image:alt" content="Campo de flores amarillas al atardecer">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Para Ericka · Flores Amarillas">
+<meta name="twitter:description" content="Un jardín que florece para ti este 21 de septiembre.">
+<meta name="twitter:image" content="https://oscarsp15.github.io/flores-amarillas/og-image.png">
 <meta name="theme-color" content="#0a1428">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
   :root { --gold:#ffd77a; --gold2:#ffe9b0; }
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #050d18; }
-  canvas { display: block; width: 100vw; height: 100vh; cursor: crosshair; }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden; background: #050d18;
+    overscroll-behavior: none; -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none; user-select: none;
+  }
+  canvas {
+    display: block; width: 100%; height: 100vh; height: 100dvh;
+    cursor: crosshair; touch-action: none;
+  }
   body { font-family: 'Cormorant Garamond', Georgia, serif; }
+
+  .noscript-note {
+    position: fixed; inset: 0; z-index: 30; display: grid; place-content: center;
+    text-align: center; padding: 28px; background: #0a1224; color: #ffe9b0;
+    font-family: 'Cormorant Garamond', Georgia, serif; font-size: 19px; line-height: 1.7;
+  }
 
   .hint {
     position: fixed; left: 50%; bottom: 30px; transform: translate(-50%, 10px);
@@ -53,12 +77,15 @@
   .panel.open { opacity: 1; pointer-events: auto; transform: none; }
   .prow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 2px; color: rgba(255,236,190,.9); font-size: 15px; }
   .prow + .prow { border-top: 1px solid rgba(255,220,150,.12); }
-  .switch {
+  .switch, .pbtn {
     width: 42px; height: 26px; border-radius: 999px; cursor: pointer;
     border: 1px solid rgba(255,220,150,.35); background: rgba(255,255,255,.06); color: rgba(255,236,190,.7);
     display: grid; place-items: center; transition: all .3s ease; font-family: inherit; font-size: 15px;
   }
-  .switch.on { background: rgba(255,215,120,.28); color: #fff4cf; box-shadow: 0 0 14px rgba(255,215,120,.5); }
+  .switch.on, .pbtn.on { background: rgba(255,215,120,.28); color: #fff4cf; box-shadow: 0 0 14px rgba(255,215,120,.5); }
+  .pbtn:hover { background: rgba(255,215,120,.18); color: #fff4cf; }
+  .pbtn:active { transform: scale(.92); }
+  .pbtn[disabled] { opacity: .4; cursor: default; }
   @keyframes pulse {
     0%, 100% { box-shadow: 0 0 0 0 rgba(255,215,120,0); }
     50% { box-shadow: 0 0 16px 2px rgba(255,215,120,.35); }
@@ -261,12 +288,20 @@
     canvas { cursor: none; }
   }
 
+  button:focus-visible, .dots i:focus-visible, .volume:focus-visible {
+    outline: 2px solid rgba(255,225,160,.9); outline-offset: 3px;
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .intro-btn, .letter-btn.beat { animation: none; }
+    .intro-btn, .letter-btn.beat, .surprise:not(.used), .loves span { animation: none; }
+    .letter-paper.turning { animation: none; }
+    .dedication, .ded-inner, .ded-date, .ded-title, .ded-name, .ded-line, .ded-sign, .ded-close,
+    .intro, .intro-inner, .loves, .closing { transition-duration: .35s !important; transition-delay: 0s !important; animation: none; }
   }
 
   @media (max-width: 600px) {
     .hint { bottom: 74px; }
+    .toast { top: 76px; max-width: 84vw; font-size: 16px; padding: 11px 18px; }
     .settings { width: 44px; height: 44px; }
     .panel { width: 200px; }
     .letter-btn { font-size: 15px; padding: 11px 20px; }
@@ -276,7 +311,14 @@
 </style>
 </head>
 <body>
-<canvas id="c"></canvas>
+<canvas id="c" role="img" aria-label="Campo animado de flores amarillas que cambia del día a la noche"></canvas>
+<noscript>
+  <div class="noscript-note">
+    <h1>Flores Amarillas · para Ericka</h1>
+    <p>Entre todas las flores, elegí las amarillas: las que florecen incluso en los días grises.</p>
+    <p>Activa JavaScript para ver el jardín completo.</p>
+  </div>
+</noscript>
 <div class="intro" id="intro">
   <div class="intro-inner">
     <svg class="flower" viewBox="0 0 64 64" aria-hidden="true">
@@ -303,13 +345,15 @@
   <div class="prow"><span>música</span><button class="switch" id="music" role="switch" aria-checked="false" aria-label="música">&#9834;</button></div>
   <div class="prow"><span>volumen</span><input type="range" class="volume" id="volume" min="0" max="100" value="60" aria-label="volumen"></div>
   <div class="prow"><span>modo suave</span><button class="switch" id="intensity" role="switch" aria-checked="false" aria-label="modo suave"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none"/></svg></button></div>
+  <div class="prow"><span>guardar imagen</span><button class="pbtn" id="snap" title="guardar una foto del jardín" aria-label="guardar una foto del jardín"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/></svg></button></div>
+  <div class="prow"><span id="resetLabel">reiniciar jardín</span><button class="pbtn" id="reset" title="quitar las flores plantadas" aria-label="quitar las flores plantadas"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button></div>
 </div>
 <button class="surprise" id="surprise" title="sorpresa" aria-label="sorpresa">
   <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.7 5.6L19.5 9l-5.8 1.4L12 16l-1.7-5.6L4.5 9l5.8-1.4z"/><circle cx="19" cy="18" r="1.6"/><circle cx="6" cy="17" r="1.2"/></svg>
 </button>
 <div class="days" id="days"></div>
 <button class="letter-btn" id="letterBtn">&#9993; abrir carta</button>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="loves" id="loves"><span id="lovesText"></span></div>
 <div class="closing" id="closing"></div>
 <button class="replay" id="replay">volver a ver</button>
@@ -392,7 +436,7 @@
   /* ===================================================================== */
 
   const canvas = document.getElementById("c");
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d", { alpha: false });
 
   let W = 0, H = 0, DPR = 1, horizon = 0;
   let t = 0, wind = 0, mouseSpeed = 0;
@@ -401,7 +445,25 @@
   let dayClock = 0, dayT = 0.12, pal = null;
   const DAY_LEN = 150;
 
-  const rand = (a, b) => a + Math.random() * (b - a);
+  /* every random draw goes through a seeded generator: the same seed rebuilds
+     the exact same field, so resizing (or the mobile address bar sliding away)
+     no longer shuffles the whole garden — and she finds her field again on every visit */
+  let seed = (Math.floor(Math.random() * 4294967296)) >>> 0;
+  try {
+    const stored = localStorage.getItem("floresSeed");
+    if (stored !== null && /^\d+$/.test(stored)) seed = (parseInt(stored, 10) >>> 0) || seed;
+    else localStorage.setItem("floresSeed", String(seed));
+  } catch (e) {}
+  let rngState = seed;
+  function reseed() { rngState = seed; }
+  function srand() {
+    rngState = (rngState + 0x6D2B79F5) >>> 0;
+    let x = rngState;
+    x = Math.imul(x ^ (x >>> 15), x | 1);
+    x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  }
+  const rand = (a, b) => a + srand() * (b - a);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const lerp = (a, b, x) => a + (b - a) * x;
   const smooth = (a, b, x) => { const u = clamp((x - a) / (b - a), 0, 1); return u * u * (3 - 2 * u); };
@@ -495,9 +557,9 @@
       petals: Math.round(rand(8, 13)), petalLen: rand(22, 34) * sizeF, petalW: rand(6, 9) * sizeF,
       rot: rand(0, 6.28), growth: 0, bloomed: false, delay,
       stemColor: `hsl(${rand(80, 110)}, ${rand(30, 45)}%, ${rand(18, 28)}%)`,
-      dots: Array.from({ length: 9 }, () => ({ a: rand(0, 6.28), r: Math.random() }))
+      dots: Array.from({ length: 9 }, () => ({ a: rand(0, 6.28), r: srand() }))
     };
-    if (Math.random() < 0.14) {
+    if (srand() < 0.14) {
       f.petalLight = "hsl(52,92%,93%)"; f.petalMid = "hsl(48,88%,82%)"; f.petalDark = "hsl(44,72%,68%)";
       f.center = ["#8a6a2e", "#6b4f22", "#4a3416"];
     } else {
@@ -511,7 +573,7 @@
     flowers = [];
     const n = q(Math.round(clamp(W / 16, 32, 72)));
     for (let i = 0; i < n; i++) {
-      const depth = Math.pow(Math.random(), 0.8);
+      const depth = Math.pow(srand(), 0.8);
       const sizeF = lerp(0.5, 1.35, depth);
       const x = (i / n) * W + rand(-W / n, W / n);
       const baseY = lerp(horizon + 2, H + 16, depth);
@@ -524,7 +586,7 @@
     grass = [];
     const n = q(Math.round(W / 4));
     for (let i = 0; i < n; i++) {
-      const depth = Math.pow(Math.random(), 0.8);
+      const depth = Math.pow(srand(), 0.8);
       grass.push({
         x: rand(-20, W + 20), baseY: lerp(horizon, H + 12, depth),
         h: rand(18, 72) * lerp(0.5, 1.4, depth), w: rand(1, 2.2) * lerp(0.6, 1.4, depth),
@@ -559,7 +621,7 @@
   }
 
   function newButterfly() {
-    const cream = Math.random() < 0.3;
+    const cream = srand() < 0.3;
     const hue = cream ? rand(44, 52) : rand(40, 54);
     return {
       x: rand(0, W), y: rand(horizon * 0.4, H * 0.88), vx: rand(-30, 30), vy: rand(-20, 20),
@@ -590,7 +652,7 @@
       for (let i = 0; i < L.n; i++) {
         const sc = rand(L.sc[0], L.sc[1]);
         const puffs = [];
-        const pn = 6 + Math.floor(Math.random() * 4);
+        const pn = 6 + Math.floor(srand() * 4);
         for (let p = 0; p < pn; p++) {
           puffs.push({ dx: rand(-L.dx, L.dx), dy: rand(-L.dy, L.dy), r: rand(L.r[0], L.r[1]) });
         }
@@ -643,13 +705,14 @@
   }
 
   function makeMemories() {
+    const wasRead = memories.map(m => m.read);
     memories = [];
     const n = GIFT.recuerdos.length;
     for (let i = 0; i < n; i++) {
       memories.push({
         x: W * (0.16 + 0.68 * (n === 1 ? 0.5 : i / (n - 1))),
         y: horizon * 0.46 + Math.sin(i * 1.9) * horizon * 0.06,
-        ph: rand(0, 6.28), read: false, data: GIFT.recuerdos[i]
+        ph: rand(0, 6.28), read: wasRead[i] === true, data: GIFT.recuerdos[i]
       });
     }
   }
@@ -686,8 +749,8 @@
         b.x += Math.sin(t * 20 + b.phase) * 8 * dt;
         b.y += Math.cos(t * 17 + b.phase) * 8 * dt;
       } else {
-        if (!b.target || b.target.growth < 0.5 || Math.random() < dt * 0.25) {
-          if (flowers.length) b.target = flowers[Math.floor(Math.random() * flowers.length)];
+        if (!b.target || b.target.growth < 0.5 || srand() < dt * 0.25) {
+          if (flowers.length) b.target = flowers[Math.floor(srand() * flowers.length)];
         }
         if (b.target) { const pt = stemPoint(b.target, 1); b.tx = pt.x; b.ty = pt.y; }
         const dx = b.tx - b.x, dy = b.ty - b.y, d = Math.hypot(dx, dy) || 1, speed = 70 * b.sp;
@@ -727,10 +790,10 @@
   }
 
   function spawnFlock() {
-    const dir = Math.random() < 0.5 ? 1 : -1;
+    const dir = srand() < 0.5 ? 1 : -1;
     const baseY = rand(horizon * 0.12, horizon * 0.5);
     const speed = rand(38, 74) * dir;
-    const n = 4 + Math.floor(Math.random() * 6);
+    const n = 4 + Math.floor(srand() * 6);
     const startX = dir > 0 ? rand(-260, -120) : W + rand(120, 260);
     for (let i = 0; i < n; i++) {
       const row = Math.floor(i / 2);
@@ -744,7 +807,7 @@
   }
 
   function updateBirds(dt) {
-    if (pal.star < 0.45 && birds.length < 46 && Math.random() < dt * 0.18) spawnFlock();
+    if (pal.star < 0.45 && birds.length < 46 && srand() < dt * 0.18) spawnFlock();
     for (let i = birds.length - 1; i >= 0; i--) {
       const b = birds[i];
       b.x += b.vx * dt;
@@ -794,7 +857,7 @@
     for (const b of ladybugs) {
       b.dayAmt = dayAmt;
       if (b.mode === "sit") {
-        if (!b.flower || b.flower.growth < 0.5) b.flower = flowers.length ? flowers[Math.floor(Math.random() * flowers.length)] : null;
+        if (!b.flower || b.flower.growth < 0.5) b.flower = flowers.length ? flowers[Math.floor(srand() * flowers.length)] : null;
         if (b.flower) {
           const pt = stemPoint(b.flower, 1);
           const hr = b.flower.petalW * 0.95 * b.flower.growth * 1.1;
@@ -803,9 +866,9 @@
         }
         b.walkT -= dt;
         if (b.walkT <= 0) {
-          if (Math.random() < 0.3 && flowers.length) {
+          if (srand() < 0.3 && flowers.length) {
             b.mode = "fly"; b.flyT = 0;
-            b.targetFlower = flowers[Math.floor(Math.random() * flowers.length)];
+            b.targetFlower = flowers[Math.floor(srand() * flowers.length)];
             b.vx = rand(-40, 40); b.vy = rand(-60, -20);
           } else {
             b.ang += rand(-1.5, 1.5); b.walkT = rand(1.5, 4);
@@ -885,7 +948,7 @@
   }
 
   function spawnHeart(x, y) {
-    const rose = Math.random() < 0.55;
+    const rose = srand() < 0.55;
     hearts.push({
       x, y, vx: rand(-12, 12), vy: -rand(18, 44), size: rand(7, 18),
       rot: rand(-0.35, 0.35), vr: rand(-0.6, 0.6), life: 0, max: rand(3.5, 7), ph: rand(0, 6.28),
@@ -899,7 +962,7 @@
     const dx = x - lastTrail.x, dy = y - lastTrail.y;
     if (dx * dx + dy * dy < 30) return;
     lastTrail.x = x; lastTrail.y = y;
-    const petal = Math.random() < 0.26;
+    const petal = srand() < 0.26;
     trail.push({
       x: x + rand(-6, 6), y: y + rand(-6, 6), vx: rand(-14, 14), vy: petal ? rand(6, 22) : rand(-30, -6),
       life: 0, max: petal ? rand(1.2, 2.2) : rand(0.6, 1.2), size: petal ? rand(3, 6) : rand(1.2, 2.6),
@@ -934,14 +997,14 @@
       x: W * 0.5, y: horizon + (H - horizon) * 0.28,
       rx, ry: clamp(rx * 0.16, 14, 40), pads: [], reeds: []
     };
-    const np = 3 + Math.floor(Math.random() * 3);
+    const np = 3 + Math.floor(srand() * 3);
     for (let i = 0; i < np; i++) {
       const a = rand(0, 6.2832), r = rand(0.2, 0.8);
       pond.pads.push({ x: pond.x + Math.cos(a) * pond.rx * r, y: pond.y + Math.sin(a) * pond.ry * r, s: rand(7, 13), rot: rand(0, 6.2832) });
     }
-    const nr = 6 + Math.floor(Math.random() * 5);
+    const nr = 6 + Math.floor(srand() * 5);
     for (let i = 0; i < nr; i++) {
-      const side = Math.random() < 0.5 ? -1 : 1;
+      const side = srand() < 0.5 ? -1 : 1;
       pond.reeds.push({ x: pond.x + side * pond.rx * rand(0.7, 1.05), h: rand(26, 60), ph: rand(0, 6.2832), bend: rand(-0.3, 0.3) });
     }
     makeKoi();
@@ -951,8 +1014,8 @@
     koi = [];
     for (let i = 0; i < 4; i++) {
       koi.push({
-        a: rand(0, 6.2832), rad: rand(0.25, 0.7), sp: rand(0.25, 0.5) * (Math.random() < 0.5 ? 1 : -1),
-        size: rand(9, 15), ph: rand(0, 6.2832), body: Math.random() < 0.5 ? "#fff2dc" : "#f08a3c"
+        a: rand(0, 6.2832), rad: rand(0.25, 0.7), sp: rand(0.25, 0.5) * (srand() < 0.5 ? 1 : -1),
+        size: rand(9, 15), ph: rand(0, 6.2832), body: srand() < 0.5 ? "#fff2dc" : "#f08a3c"
       });
     }
   }
@@ -1077,7 +1140,7 @@
 
   function updateLanterns(dt) {
     const night = pal.star;
-    if (night > 0.35 && lanterns.length < 26 && Math.random() < dt * (0.25 + night * 0.9)) spawnLantern();
+    if (night > 0.35 && lanterns.length < 26 && srand() < dt * (0.25 + night * 0.9)) spawnLantern();
     for (let i = lanterns.length - 1; i >= 0; i--) {
       const l = lanterns[i];
       l.y += l.vy * dt;
@@ -1296,16 +1359,16 @@
   }
 
   function spawnShootingStar() {
-    const fromLeft = Math.random() < 0.5;
+    const fromLeft = srand() < 0.5;
     shooting.push({
       x: fromLeft ? rand(0, W * 0.5) : rand(W * 0.5, W), y: rand(0, horizon * 0.35),
       vx: (fromLeft ? 1 : -1) * rand(220, 360), vy: rand(100, 180), life: 0, max: rand(0.9, 1.6)
     });
   }
   function drawShootingStars(dt) {
-    if (pal.star > 0.5 && Math.random() < dt * 0.012 && shooting.length < 2) {
+    if (pal.star > 0.5 && srand() < dt * 0.012 && shooting.length < 2) {
       for (let k = 0; k < 5; k++) spawnShootingStar();
-    } else if (Math.random() < dt * 0.2 && shooting.length < 3) {
+    } else if (srand() < dt * 0.2 && shooting.length < 3) {
       spawnShootingStar();
     }
     ctx.save(); ctx.globalCompositeOperation = "lighter";
@@ -1464,16 +1527,30 @@
     ctx.restore();
   }
 
-  function drawHills() {
-    ctx.save(); ctx.translate(parX * 0.4, parY * 0.4);
+  /* the hills never change shape: bake them once per resize instead of
+     re-tracing hundreds of points and two gradients on every frame */
+  let hillsLayer = null;
+  function bakeHills() {
+    if (!hillsLayer) hillsLayer = document.createElement("canvas");
+    hillsLayer.width = Math.max(1, Math.round(W * DPR));
+    hillsLayer.height = Math.max(1, Math.round(H * DPR));
+    const g2 = hillsLayer.getContext("2d");
+    g2.setTransform(DPR, 0, 0, DPR, 0, 0);
+    g2.clearRect(0, 0, W, H);
     for (const h of hills) {
-      ctx.beginPath(); ctx.moveTo(-40, H);
-      for (const p of h.pts) ctx.lineTo(p.x, p.y);
-      ctx.lineTo(W + 40, H); ctx.closePath();
-      const g = ctx.createLinearGradient(0, horizon * 0.8, 0, H);
+      g2.beginPath(); g2.moveTo(-40, H);
+      for (const p of h.pts) g2.lineTo(p.x, p.y);
+      g2.lineTo(W + 40, H); g2.closePath();
+      const g = g2.createLinearGradient(0, horizon * 0.8, 0, H);
       g.addColorStop(0, h.c1); g.addColorStop(1, h.c2);
-      ctx.fillStyle = g; ctx.fill();
+      g2.fillStyle = g; g2.fill();
     }
+  }
+
+  function drawHills() {
+    if (!hillsLayer) return;
+    ctx.save(); ctx.translate(parX * 0.4, parY * 0.4);
+    ctx.drawImage(hillsLayer, 0, 0, W, H);
     ctx.restore();
   }
 
@@ -1833,8 +1910,8 @@
       if (b.x < -40) b.x = W + 40;
       if (b.x > W + 40) b.x = -40;
       b.y = clamp(b.y, horizon * 0.28, H * 0.92);
-      if (Math.random() < dt * 0.14 && flowers.length) {
-        const f = flowers[Math.floor(Math.random() * flowers.length)];
+      if (srand() < dt * 0.14 && flowers.length) {
+        const f = flowers[Math.floor(srand() * flowers.length)];
         if (f.growth > 0.6) { b.perchFlower = f; b.mode = "perch"; b.perchT = rand(2.5, 6); }
       }
     }
@@ -1845,7 +1922,7 @@
     const raining = petalRainT > 0;
     const cap = raining ? (soft ? 90 : 220) : (soft ? 26 : 60);
     const rate = raining ? (soft ? 30 : 70) : (soft ? 5 : 12);
-    if (falling.length < cap && Math.random() < dt * rate) spawnPetal(true);
+    if (falling.length < cap && srand() < dt * rate) spawnPetal(true);
     for (const p of falling) {
       p.x += (p.vx + wind * 0.7 + Math.sin(t * p.wobSp + p.wob) * 0.5) * dt * 60;
       p.y += p.vy * dt * 60; p.rot += p.vr * dt * 60;
@@ -1865,7 +1942,7 @@
   }
 
   function updateHearts(dt) {
-    if (hearts.length < (soft ? 14 : 34) && Math.random() < dt * (soft ? 0.3 : 0.7)) spawnHeart(rand(0, W), H + rand(0, 40));
+    if (hearts.length < (soft ? 14 : 34) && srand() < dt * (soft ? 0.3 : 0.7)) spawnHeart(rand(0, W), H + rand(0, 40));
     for (let i = hearts.length - 1; i >= 0; i--) {
       const h = hearts[i];
       h.life += dt;
@@ -1894,7 +1971,7 @@
     for (let i = rockets.length - 1; i >= 0; i--) {
       const r = rockets[i];
       r.y += r.vy * dt; r.vy += 60 * dt;
-      if (Math.random() < 0.85) sparks.push({ x: r.x + rand(-2, 2), y: r.y, vx: rand(-12, 12), vy: rand(0, 25), life: 0, max: rand(0.3, 0.7), size: rand(1, 2.2), hue: r.hue, grav: 30 });
+      if (srand() < 0.85) sparks.push({ x: r.x + rand(-2, 2), y: r.y, vx: rand(-12, 12), vy: rand(0, 25), life: 0, max: rand(0.3, 0.7), size: rand(1, 2.2), hue: r.hue, grav: 30 });
       if (r.y <= r.targetY || r.vy >= 0) { explodeRocket(r); rockets.splice(i, 1); }
     }
     for (let i = sparks.length - 1; i >= 0; i--) {
@@ -1965,7 +2042,7 @@
     const len = Math.floor(actx.sampleRate * 0.4);
     noiseBuf = actx.createBuffer(1, len, actx.sampleRate);
     const d = noiseBuf.getChannelData(0);
-    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = 0; i < len; i++) d[i] = srand() * 2 - 1;
   }
   function playCricket(time) {
     if (!actx || !noiseBuf) return;
@@ -1985,8 +2062,8 @@
 
   function scheduleStep(time) {
     const night = pal && pal.star > 0.5;
-    playNote(noteFreq(PENTA[Math.floor(Math.random() * PENTA.length)] - (night ? 12 : 0)), time, rand(1.4, 2.6), 0.08, "triangle");
-    if (Math.random() < 0.45) playNote(noteFreq(PENTA[Math.floor(Math.random() * PENTA.length)] + 12), time + 0.22, rand(0.8, 1.4), 0.04, "sine");
+    playNote(noteFreq(PENTA[Math.floor(srand() * PENTA.length)] - (night ? 12 : 0)), time, rand(1.4, 2.6), 0.08, "triangle");
+    if (srand() < 0.45) playNote(noteFreq(PENTA[Math.floor(srand() * PENTA.length)] + 12), time + 0.22, rand(0.8, 1.4), 0.04, "sine");
     if (step % 8 === 0) playNote(noteFreq(-12), time, 3.4, 0.06, "sine");
     step++;
   }
@@ -2031,7 +2108,7 @@
   function plantSound() {
     if (!actx || !musicOn) return;
     const now = actx.currentTime + 0.01;
-    playNote(noteFreq(PENTA[Math.floor(Math.random() * PENTA.length)] + 12), now, 0.9, 0.045, "sine");
+    playNote(noteFreq(PENTA[Math.floor(srand() * PENTA.length)] + 12), now, 0.9, 0.045, "sine");
   }
 
   musicBtn.addEventListener("pointerdown", e => e.stopPropagation());
@@ -2051,10 +2128,10 @@
 
   /* ================= toast / letter / card ================= */
 
-  let toastTimer = null, pendingToast = null;
+  let toastTimer = null, pendingToast = null, panelOpen = false;
   const toastEl = document.getElementById("toast");
   function dialogOpen() {
-    return (dedEl.classList.contains("show") && !dedEl.classList.contains("hidden")) || letterEl.classList.contains("show") || cardEl.classList.contains("show");
+    return panelOpen || (dedEl.classList.contains("show") && !dedEl.classList.contains("hidden")) || letterEl.classList.contains("show") || cardEl.classList.contains("show");
   }
   function showToast(msg) {
     if (dialogOpen()) { pendingToast = msg; return; }
@@ -2144,7 +2221,7 @@
     { name: "corazones", fn: heartBurst }
   ];
   function surprise() {
-    const s = SURPRISES[Math.floor(Math.random() * SURPRISES.length)];
+    const s = SURPRISES[Math.floor(srand() * SURPRISES.length)];
     s.fn();
     showToast("sorpresa: " + s.name);
     playChime();
@@ -2242,6 +2319,7 @@
       if (cardEl.classList.contains("show")) { trapFocus(cardEl, e); return; }
       if (letterEl.classList.contains("show")) { trapFocus(letterEl, e); return; }
     }
+    if (e.key === "Escape" && panelEl.classList.contains("open")) { setPanel(false); settingsBtn.focus(); }
     if (cardEl.classList.contains("show") && e.key === "Escape") closeCard();
     if (!letterEl.classList.contains("show")) return;
     if (e.key === "ArrowLeft") gotoPage(letterPage - 1);
@@ -2293,7 +2371,7 @@
     flowers.sort((a, b) => a.baseY - b.baseY);
     const pt = stemPoint(f, 1);
     addBurst(pt.x, pt.y, 22, 48, 120);
-    if (Math.random() < 0.4) spawnHeart(clientX, baseY - f.height);
+    if (srand() < 0.4) spawnHeart(clientX, baseY - f.height);
     for (const b of butterflies) {
       const d = Math.hypot(b.x - clientX, b.y - clientY);
       if (d < 220) { b.mode = "fly"; b.retarget = 0; b.tx = b.x + (b.x - clientX) * 1.5; b.ty = clamp(b.y + (b.y - clientY) * 1.5, horizon * 0.3, H * 0.9); }
@@ -2302,6 +2380,7 @@
     plantedSpots.push({ x: clientX / W, y: baseY / H });
     if (plantedSpots.length > 120) plantedSpots.shift();
     flowersPlanted++;
+    updateChip();
     checkMilestones();
     saveGarden();
     plantSound();
@@ -2315,7 +2394,7 @@
     addTrail(clientX, clientY);
   }
 
-  window.addEventListener("pointermove", e => pointerWind(e.clientX, e.clientY));
+  window.addEventListener("pointermove", e => pointerWind(e.clientX, e.clientY), { passive: true });
   window.addEventListener("pointerdown", e => {
     pointerWind(e.clientX, e.clientY);
 
@@ -2376,14 +2455,24 @@
     });
   }
 
-  function showDays() {
-    if (!GIFT.inicio) return;
+  function daysText() {
+    if (!GIFT.inicio) return "";
     const d0 = new Date(GIFT.inicio), now = new Date();
+    if (isNaN(d0)) return "";
     const days = Math.floor((now - d0) / 86400000);
-    if (days < 0) return;
+    if (days < 0) return "";
+    return days === 0 ? "hoy empieza todo" : days + " días floreciendo juntos";
+  }
+
+  /* the chip doubles as feedback: it shows how many flowers she has planted */
+  function updateChip() {
     const el = document.getElementById("days");
-    el.textContent = days === 0 ? "hoy empieza todo" : days + " días floreciendo juntos";
-    el.classList.add("show");
+    const parts = [];
+    const d = daysText();
+    if (d) parts.push(d);
+    if (flowersPlanted > 0) parts.push("\u273F " + flowersPlanted + (flowersPlanted === 1 ? " flor" : " flores"));
+    el.textContent = parts.join("  ·  ");
+    el.classList.toggle("show", parts.length > 0);
   }
 
   function reveal() {
@@ -2414,14 +2503,35 @@
   /* ================= loop / setup ================= */
 
   let last = performance.now();
+  let frameAcc = 0, frameSamples = 0, slowWindows = 0, autoSoftDone = false;
+
+  /* if the device is clearly struggling, drop to soft mode by itself
+     instead of leaving the gift stuttering */
+  function watchPerformance(dt) {
+    if (autoSoftDone || soft || !started) return;
+    frameAcc += dt; frameSamples++;
+    if (frameAcc < 3) return;
+    const fps = frameSamples / frameAcc;
+    frameAcc = 0; frameSamples = 0;
+    slowWindows = fps < 28 ? slowWindows + 1 : 0;
+    if (slowWindows < 2) return;
+    autoSoftDone = true;
+    soft = true;
+    intensityBtn.classList.add("on");
+    intensityBtn.setAttribute("aria-checked", "true");
+    applyQuality();
+    showToast("activé el modo suave para que todo fluya mejor");
+  }
+
   function loop(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    if (!document.hidden) { update(dt); render(dt); }
+    if (!document.hidden) { update(dt); render(dt); watchPerformance(dt); }
     requestAnimationFrame(loop);
   }
 
   function build() {
+    reseed();
     makeStars(); makeHills(); makeClouds(); makeGrass(); makeFlowers();
     for (const p of plantedSpots) {
       const bx = p.x * W, by = p.y * H;
@@ -2429,27 +2539,51 @@
       flowers.push(createFlower(bx, by, lerp(0.55, 1.4, depth), 0, -10));
     }
     flowers.sort((a, b) => a.baseY - b.baseY);
+    bakeHills();
     makePollen(); makeFireflies(); makeButterflies(); makeNameConstellation(); makeMemories(); makeBees(); makeLadybugs(); makeDragonflies(); makePond(); makeGarland();
     shooting = []; bursts = []; falling = []; hearts = []; trail = []; rockets = []; sparks = []; birds = []; lanterns = []; lanternsReleased = false;
     for (let i = 0; i < 35; i++) spawnPetal(false);
   }
 
-  function resize() {
-    DPR = Math.min(window.devicePixelRatio || 1, soft ? 1.25 : 2);
-    W = canvas.clientWidth; H = canvas.clientHeight;
-    canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  let builtW = 0, builtH = 0, resizeTimer = null;
+
+  function resize(force) {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    if (!w || !h) return;
+    if (force !== true && w === builtW && h === builtH) return;
+    builtW = w; builtH = h;
+    W = w; H = h;
+    applyBacking();
     horizon = H * 0.74;
     build();
   }
 
-  window.addEventListener("resize", resize);
+  function applyBacking() {
+    DPR = Math.min(window.devicePixelRatio || 1, soft ? 1.25 : 2);
+    canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+
+  /* switching quality also switches pixel density, not only the crowd counts */
+  function applyQuality() {
+    applyBacking();
+    build();
+  }
+
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(resize, 150);
+  });
+  window.addEventListener("orientationchange", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => resize(true), 250);
+  });
 
   pal = getPalette(dayT);
   buildDedication();
   buildLetter();
-  showDays();
   loadGarden();
+  updateChip();
   resize();
   requestAnimationFrame(loop);
 
@@ -2476,17 +2610,22 @@
   intensityBtn.addEventListener("click", e => {
     e.stopPropagation();
     soft = !soft;
+    autoSoftDone = true;
     intensityBtn.classList.toggle("on", soft);
     intensityBtn.setAttribute("aria-checked", soft ? "true" : "false");
-    build();
+    applyQuality();
   });
 
   const settingsBtn = document.getElementById("settings");
   const panelEl = document.getElementById("panel");
   function setPanel(open) {
+    panelOpen = open;
+    if (!open) disarmReset();
     panelEl.classList.toggle("open", open);
     settingsBtn.classList.toggle("on", open);
     settingsBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    if (open) { toastEl.classList.remove("show"); clearTimeout(toastTimer); }
+    else flushToast();
   }
   settingsBtn.addEventListener("pointerdown", e => e.stopPropagation());
   settingsBtn.addEventListener("click", e => { e.stopPropagation(); setPanel(!panelEl.classList.contains("open")); });
@@ -2495,11 +2634,95 @@
     if (panelEl.classList.contains("open") && !panelEl.contains(e.target) && !settingsBtn.contains(e.target)) setPanel(false);
   });
 
+  /* save a still of the garden, caption included */
+  const snapBtn = document.getElementById("snap");
+  function snapshot() {
+    let out;
+    try {
+      out = document.createElement("canvas");
+      out.width = canvas.width; out.height = canvas.height;
+      const g = out.getContext("2d");
+      g.drawImage(canvas, 0, 0);
+      g.setTransform(DPR, 0, 0, DPR, 0, 0);
+      const band = g.createLinearGradient(0, H - 170, 0, H);
+      band.addColorStop(0, "rgba(4,7,14,0)");
+      band.addColorStop(1, "rgba(4,7,14,.72)");
+      g.fillStyle = band; g.fillRect(0, H - 170, W, 170);
+      g.textAlign = "center";
+      g.fillStyle = "rgba(255,238,196,.96)";
+      g.font = "italic " + Math.round(clamp(W * 0.036, 20, 40)) + "px 'Cormorant Garamond', Georgia, serif";
+      g.fillText(GIFT.titulo + ", " + GIFT.para, W / 2, H - 62);
+      g.fillStyle = "rgba(255,220,150,.82)";
+      g.font = Math.round(clamp(W * 0.018, 12, 19)) + "px 'Cormorant Garamond', Georgia, serif";
+      g.fillText(GIFT.fecha, W / 2, H - 32);
+    } catch (e) {
+      setPanel(false);
+      showToast("no pude guardar la imagen en este navegador");
+      return;
+    }
+    const name = "flores-amarillas-" + new Date().toISOString().slice(0, 10) + ".png";
+    const save = (url, revoke) => {
+      const a = document.createElement("a");
+      a.href = url; a.download = name; a.rel = "noopener";
+      document.body.appendChild(a); a.click(); a.remove();
+      if (revoke) setTimeout(() => URL.revokeObjectURL(url), 8000);
+      setPanel(false);
+      showToast("guardé una foto de tu jardín");
+    };
+    if (out.toBlob) {
+      out.toBlob(b => {
+        if (b) save(URL.createObjectURL(b), true);
+        else { setPanel(false); showToast("no pude guardar la imagen en este navegador"); }
+      }, "image/png");
+    } else {
+      save(out.toDataURL("image/png"), false);
+    }
+  }
+  snapBtn.addEventListener("pointerdown", e => e.stopPropagation());
+  snapBtn.addEventListener("click", e => { e.stopPropagation(); snapshot(); });
+
+  /* planted flowers persist forever; let her start the garden over */
+  const resetBtn = document.getElementById("reset");
+  const resetLabel = document.getElementById("resetLabel");
+  let resetArmed = false, resetTimer = null;
+  function disarmReset() {
+    clearTimeout(resetTimer);
+    resetArmed = false;
+    resetBtn.classList.remove("on");
+    resetLabel.textContent = "reiniciar jardín";
+  }
+  function resetGarden() {
+    if (!resetArmed) {
+      resetArmed = true;
+      resetBtn.classList.add("on");
+      resetLabel.textContent = "¿seguro? toca otra vez";
+      resetTimer = setTimeout(disarmReset, 5000);
+      return;
+    }
+    disarmReset();
+    plantedSpots = []; flowersPlanted = 0; milestoneIdx = 0;
+    try { localStorage.removeItem("floresGarden"); } catch (e) {}
+    build();
+    updateChip();
+    setPanel(false);
+    showToast("el jardín vuelve a empezar");
+  }
+  resetBtn.addEventListener("pointerdown", e => e.stopPropagation());
+  resetBtn.addEventListener("click", e => { e.stopPropagation(); resetGarden(); });
+
   const surpriseBtn = document.getElementById("surprise");
   surpriseBtn.addEventListener("pointerdown", e => e.stopPropagation());
   surpriseBtn.addEventListener("click", e => { e.stopPropagation(); surpriseBtn.classList.add("used"); surprise(); });
 
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) last = performance.now(); });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      if (actx && musicOn && actx.state === "running") actx.suspend();
+    } else {
+      last = performance.now();
+      frameSamples = 0; frameAcc = 0;
+      if (actx && musicOn && actx.state === "suspended") actx.resume();
+    }
+  });
 })();
 </script>
 </body>
