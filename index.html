@@ -2289,7 +2289,7 @@
   const toastEl = document.getElementById("toast");
 
   function dialogOpen() {
-    return panelOpen || lovesEl.classList.contains("show") || (dedEl.classList.contains("show") && !dedEl.classList.contains("hidden")) || letterEl.classList.contains("show") || cardEl.classList.contains("show");
+    return panelOpen || lovesEl.classList.contains("show") || closingEl.classList.contains("show") || (dedEl.classList.contains("show") && !dedEl.classList.contains("hidden")) || letterEl.classList.contains("show") || cardEl.classList.contains("show");
   }
 
   function presentMsg(msg, isHint) {
@@ -2382,8 +2382,10 @@
   function showLove() {
     if (loveShown) return;
     loveShown = true;
-    /* si habia un aviso en pantalla, lo apartamos y vuelve despues del climax */
-    hideMsgNow(true);
+    /* el final limpia la mesa: ningun aviso pendiente sobrevive al climax */
+    hideMsgNow(false);
+    msgQueue.length = 0;
+    pendingToast = null;
     document.getElementById("lovesText").textContent = GIFT.teQuiero;
     lovesEl.classList.add("show");
     playChime();
@@ -2391,19 +2393,20 @@
     clearTimeout(loveHideTimer);
     loveHideTimer = setTimeout(() => {
       lovesEl.classList.remove("show");
-      flushToast();
-      setTimeout(showClosing, 2600);
-    }, 12000);
+      /* silencio antes de la ultima linea: el final necesita respirar */
+      setTimeout(showClosing, 3600);
+    }, 14000);
   }
   function showClosing() {
     closingEl.textContent = GIFT.cierre;
     closingEl.classList.add("show");
+    playChime();
     clearTimeout(closeTimer);
     closeTimer = setTimeout(() => {
       closingEl.classList.remove("show");
-      endbarEl.classList.add("show");
-      showToast("el jardín se queda contigo: la estrellita de abajo guarda sorpresas");
-    }, 6000);
+      /* el boton llega en silencio: aqui ya no se explica nada */
+      setTimeout(() => endbarEl.classList.add("show"), 2000);
+    }, 9000);
   }
   function replayFinale() {
     clearTimeout(loveHideTimer); clearTimeout(closeTimer);
