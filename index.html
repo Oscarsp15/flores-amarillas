@@ -243,6 +243,30 @@
     50% { box-shadow: 0 0 18px 3px rgba(255,215,120,.5); }
   }
 
+  .gate {
+    position: fixed; inset: 0; z-index: 25; display: flex; align-items: center; justify-content: center;
+    text-align: center; padding: 24px; opacity: 1; transition: opacity 1.6s ease;
+    background: radial-gradient(120% 100% at 50% 38%, #16294a 0%, #0a1224 55%, #05080f 100%);
+  }
+  .gate[hidden] { display: none; }
+  .gate.hide { opacity: 0; pointer-events: none; }
+  .gate-inner { animation: introIn 1.6s ease both; max-width: 560px; }
+  .gate .flower { width: 54px; height: 54px; margin-bottom: 12px; filter: drop-shadow(0 0 18px rgba(255,205,100,.55)); animation: gateSpin 26s linear infinite; }
+  @keyframes gateSpin { to { transform: rotate(360deg); } }
+  .gate-title { font-family: 'Great Vibes', cursive; font-size: clamp(38px, 11vw, 82px); color: #ffe9b0; line-height: 1.05; text-shadow: 0 0 30px rgba(255,205,100,.5), 0 0 80px rgba(255,170,70,.3); }
+  .gate-sub { font-size: clamp(12px, 3.4vw, 16px); letter-spacing: 5px; text-transform: uppercase; color: rgba(255,235,190,.7); margin-top: 8px; }
+  .count { display: flex; justify-content: center; gap: clamp(8px, 2.5vw, 16px); margin-top: clamp(26px, 6vw, 40px); }
+  .cbox[hidden] { display: none; }
+  .cbox {
+    min-width: clamp(58px, 17vw, 82px); padding: 12px 8px; border-radius: 16px;
+    border: 1px solid rgba(255,220,150,.28); background: rgba(20,14,6,.45);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  }
+  .cnum { font-size: clamp(24px, 7vw, 40px); color: #ffe9b0; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .clab { font-size: clamp(9px, 2.4vw, 11px); letter-spacing: 2px; text-transform: uppercase; color: rgba(255,235,190,.55); margin-top: 6px; }
+  .gate-note { margin: clamp(24px, 6vw, 34px) 0 0; font-size: clamp(15px, 4vw, 19px); font-style: italic; color: rgba(255,235,190,.78); line-height: 1.6; }
+  .gate-soon { margin: 10px 0 0; font-size: clamp(13px, 3.4vw, 15px); color: rgba(255,220,150,.55); letter-spacing: .5px; }
+
   .intro {
     position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center;
     text-align: center; padding: 24px; opacity: 1; transition: opacity 1.4s ease;
@@ -293,7 +317,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .intro-btn, .letter-btn.beat, .surprise:not(.used), .loves span { animation: none; }
+    .intro-btn, .letter-btn.beat, .surprise:not(.used), .loves span, .gate .flower { animation: none; }
     .letter-paper.turning { animation: none; }
     .dedication, .ded-inner, .ded-date, .ded-title, .ded-name, .ded-line, .ded-sign, .ded-close,
     .intro, .intro-inner, .loves, .closing { transition-duration: .35s !important; transition-delay: 0s !important; animation: none; }
@@ -319,6 +343,31 @@
     <p>Activa JavaScript para ver el jardín completo.</p>
   </div>
 </noscript>
+<div class="gate" id="gate" hidden>
+  <div class="gate-inner">
+    <svg class="flower" viewBox="0 0 64 64" aria-hidden="true">
+      <g transform="translate(32 34)" fill="#ffd06a">
+        <ellipse cx="0" cy="-15" rx="7" ry="13"/>
+        <ellipse cx="0" cy="-15" rx="7" ry="13" transform="rotate(60)"/>
+        <ellipse cx="0" cy="-15" rx="7" ry="13" transform="rotate(120)"/>
+        <ellipse cx="0" cy="-15" rx="7" ry="13" transform="rotate(180)"/>
+        <ellipse cx="0" cy="-15" rx="7" ry="13" transform="rotate(240)"/>
+        <ellipse cx="0" cy="-15" rx="7" ry="13" transform="rotate(300)"/>
+        <circle r="8" fill="#7a4a12"/>
+      </g>
+    </svg>
+    <div class="gate-title">Flores Amarillas</div>
+    <div class="gate-sub" id="gateFor"></div>
+    <div class="count" id="count" aria-hidden="true">
+      <div class="cbox" id="cBoxD"><div class="cnum" id="cD">0</div><div class="clab">días</div></div>
+      <div class="cbox"><div class="cnum" id="cH">00</div><div class="clab">horas</div></div>
+      <div class="cbox"><div class="cnum" id="cM">00</div><div class="clab">min</div></div>
+      <div class="cbox"><div class="cnum" id="cS">00</div><div class="clab">seg</div></div>
+    </div>
+    <p class="gate-note" id="gateNote"></p>
+    <p class="gate-soon" id="gateSoon"></p>
+  </div>
+</div>
 <div class="intro" id="intro">
   <div class="intro-inner">
     <svg class="flower" viewBox="0 0 64 64" aria-hidden="true">
@@ -404,6 +453,13 @@
     fecha: "21 · Septiembre",
     nombreEstelar: "ERICKA",                 // se dibuja con estrellas en el cielo
     inicio: "",                              // opcional: "2023-09-21" para el contador de días
+
+    // El jardín queda cerrado con una cuenta atrás hasta este momento.
+    // Déjalo en "" para que abra siempre. Añade ?abrir a la URL para saltarte la espera y probarlo.
+    apertura: "2026-09-21T00:15",
+    // "" = hora local de quien abre la web. Pon un huso fijo ("-05:00", "+02:00"...)
+    // si quieres que se abra en el mismo instante para todo el mundo.
+    husoHorario: "",
     lineas: [
       "Entre todas las flores, elegí las amarillas:",
       "las que florecen incluso en los días grises.",
@@ -434,6 +490,68 @@
     ]
   };
   /* ===================================================================== */
+
+  /* ================= apertura programada ================= */
+
+  const gateEl = document.getElementById("gate");
+  let gateOpen = true;
+
+  function aperturaDate() {
+    if (!GIFT.apertura) return null;
+    /* sin huso, "2026-09-21T00:15" se interpreta en la hora local de quien mira */
+    const d = new Date(GIFT.apertura + (GIFT.husoHorario || ""));
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function two(n) { return n < 10 ? "0" + n : String(n); }
+
+  function openGate() {
+    if (gateOpen) return;
+    gateOpen = true;
+    gateEl.classList.add("hide");
+    setTimeout(() => { if (gateEl.parentNode) gateEl.remove(); }, 1800);
+  }
+
+  function startGate(target) {
+    gateOpen = false;
+    gateEl.hidden = false;
+    gateEl.addEventListener("pointerdown", e => e.stopPropagation());
+    document.getElementById("gateFor").textContent = "para " + GIFT.para;
+    let cuando = "";
+    try {
+      cuando = target.toLocaleDateString("es-ES", { day: "numeric", month: "long" }) +
+               " a las " + target.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+    } catch (e) {}
+    document.getElementById("gateNote").textContent =
+      cuando ? "Este jardín florece el " + cuando + "." : "Este jardín todavía no ha florecido.";
+    document.getElementById("gateSoon").textContent = "vuelve en ese momento: te estará esperando";
+
+    const dEl = document.getElementById("cD"), hEl = document.getElementById("cH");
+    const mEl = document.getElementById("cM"), sEl = document.getElementById("cS");
+    const dBox = document.getElementById("cBoxD");
+    let timer = null, shown = -1;
+    function tick() {
+      const left = target.getTime() - Date.now();
+      const secs = Math.max(0, Math.ceil(left / 1000));
+      if (secs !== shown) {
+        shown = secs;
+        const days = Math.floor(secs / 86400);
+        dBox.hidden = days === 0;   /* el último día sobra la casilla de días */
+        dEl.textContent = days;
+        hEl.textContent = two(Math.floor(secs / 3600) % 24);
+        mEl.textContent = two(Math.floor(secs / 60) % 60);
+        sEl.textContent = two(secs % 60);
+      }
+      if (left <= 0) { clearInterval(timer); openGate(); }
+    }
+    tick();
+    timer = setInterval(tick, 250);
+  }
+
+  const aperturaT = aperturaDate();
+  /* ?abrir (o #abrir) en la URL salta la espera, para poder revisarla antes */
+  const saltarEspera = /(^|[?&#])abrir/.test(location.search + location.hash);
+  if (aperturaT && !saltarEspera && Date.now() < aperturaT.getTime()) startGate(aperturaT);
 
   const canvas = document.getElementById("c");
   const ctx = canvas.getContext("2d", { alpha: false });
@@ -2591,7 +2709,7 @@
   const introBtn = document.getElementById("introBtn");
   let started = false;
   function startExperience() {
-    if (started) return;
+    if (started || !gateOpen) return;
     started = true;
     introEl.classList.add("hide");
     setTimeout(() => { if (introEl.parentNode) introEl.remove(); }, 1700);
