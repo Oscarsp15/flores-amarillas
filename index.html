@@ -49,7 +49,9 @@
     z-index: 6; pointer-events: none; text-align: center; max-width: 88vw;
     font-family: 'Cormorant Garamond', Georgia, serif;
     font-size: clamp(15px, 3.8vw, 18px); letter-spacing: .3px;
-    color: rgba(255, 238, 196, .78); text-shadow: 0 1px 10px rgba(0,0,0,.85);
+    padding: 9px 18px; border-radius: 999px;
+    background: rgba(8,10,16,.52); -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
+    color: rgba(255, 240, 205, .92); text-shadow: 0 2px 12px rgba(0,0,0,.9);
     opacity: 0; transition: opacity 1.5s ease, transform 1.5s ease;
   }
   .hint.show { opacity: 1; transform: translate(-50%, 0); }
@@ -127,6 +129,9 @@
     display: flex; align-items: center; justify-content: center;
     text-align: center; padding: 24px;
     opacity: 0; transition: opacity 2.2s ease;
+    /* sin este velo el texto se pierde sobre un campo lleno de flores */
+    background: radial-gradient(ellipse 88% 66% at 50% 48%,
+      rgba(3,6,12,.86) 0%, rgba(3,6,12,.78) 38%, rgba(3,6,12,.5) 66%, rgba(3,6,12,.12) 88%, rgba(3,6,12,0) 100%);
   }
   .dedication.show { opacity: 1; }
   .dedication.hidden { opacity: 0; }
@@ -138,7 +143,7 @@
   }
   .dedication.show .ded-date, .dedication.show .ded-title, .dedication.show .ded-name,
   .dedication.show .ded-line, .dedication.show .ded-sign, .dedication.show .ded-close { opacity: 1; transform: none; }
-  .ded-date { font-size: clamp(13px, 4vw, 17px); letter-spacing: clamp(3px, 1.6vw, 7px); text-transform: uppercase; color: rgba(255,220,150,.78); margin-bottom: 14px; transition-delay: .2s; }
+  .ded-date { font-size: clamp(13px, 4vw, 17px); letter-spacing: clamp(3px, 1.6vw, 7px); text-transform: uppercase; color: rgba(255,220,150,.85); margin-bottom: 14px; transition-delay: .2s; text-shadow: 0 2px 14px rgba(0,0,0,.9); }
   .ded-title {
     font-size: clamp(28px, 6vw, 56px); font-weight: 600; margin: 0 0 4px; letter-spacing: .5px;
     background: linear-gradient(180deg, #fff7db, #ffd06a 55%, #e9a23a);
@@ -150,11 +155,13 @@
     font-size: clamp(36px, 9vw, 76px); color: #ffe9b0; margin: 4px 0 20px; line-height: 1.1;
     text-shadow: 0 0 24px rgba(255,205,100,.6), 0 0 60px rgba(255,180,70,.35); transition-delay: .9s;
   }
-  .ded-line { font-size: clamp(16px, 4.6vw, 21px); color: rgba(255,246,224,.92); margin: 7px 0; font-weight: 300; letter-spacing: .4px; text-shadow: 0 1px 12px rgba(0,0,0,.65); }
-  .ded-sign { margin-top: 24px; font-size: clamp(16px, 4.6vw, 20px); color: rgba(255,220,150,.9); font-style: italic; transition-delay: 1.6s; }
+  .ded-line { font-size: clamp(16px, 4.6vw, 21px); color: rgba(255,246,224,.95); margin: 7px 0; font-weight: 300; letter-spacing: .4px; text-shadow: 0 2px 16px rgba(0,0,0,.92), 0 0 34px rgba(0,0,0,.6); }
+  .ded-sign { margin-top: 24px; font-size: clamp(16px, 4.6vw, 20px); color: rgba(255,225,165,.95); font-style: italic; transition-delay: 1.6s; text-shadow: 0 2px 16px rgba(0,0,0,.92), 0 0 34px rgba(0,0,0,.6); }
   .ded-close {
-    pointer-events: auto; margin-top: 28px; background: transparent;
-    border: 1px solid rgba(255,220,150,.45); color: rgba(255,232,185,.92);
+    pointer-events: auto; margin-top: 28px;
+    background: rgba(14,11,6,.72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    box-shadow: 0 10px 34px rgba(0,0,0,.55);
+    border: 1px solid rgba(255,220,150,.7); color: #ffeec4;
     padding: 10px 24px; border-radius: 999px; font-family: inherit;
     font-size: 15px; letter-spacing: 1.2px; cursor: pointer; transition: all .35s ease; transition-delay: 2s;
   }
@@ -203,6 +210,8 @@
   .loves {
     position: fixed; inset: 0; z-index: 11; display: flex; align-items: center; justify-content: center;
     pointer-events: none; opacity: 0; transition: opacity 2.6s ease; text-align: center; padding: 24px;
+    background: radial-gradient(ellipse 85% 55% at 50% 50%,
+      rgba(3,6,12,.76) 0%, rgba(3,6,12,.6) 42%, rgba(3,6,12,.22) 74%, rgba(3,6,12,0) 100%);
   }
   .loves.show { opacity: 1; }
   .loves span {
@@ -221,8 +230,11 @@
   .closing {
     position: fixed; left: 50%; bottom: 28%; transform: translate(-50%, 10px); z-index: 11;
     pointer-events: none; text-align: center; font-family: 'Cormorant Garamond', Georgia, serif;
-    font-style: italic; font-size: clamp(18px, 5vw, 30px); color: rgba(255,240,205,.92);
-    text-shadow: 0 0 20px rgba(255,190,90,.6); opacity: 0; transition: opacity 2s ease, transform 2s ease;
+    font-style: italic; font-size: clamp(18px, 5vw, 30px); color: rgba(255,242,210,.95);
+    padding: 10px 22px; border-radius: 999px; background: rgba(6,8,14,.5);
+    -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
+    text-shadow: 0 0 20px rgba(255,190,90,.6), 0 2px 14px rgba(0,0,0,.9);
+    opacity: 0; transition: opacity 2s ease, transform 2s ease;
   }
   .closing.show { opacity: 1; transform: translate(-50%, 0); }
 
@@ -326,6 +338,8 @@
   @media (max-width: 600px) {
     .hint { bottom: 74px; }
     .toast { top: 76px; max-width: 84vw; font-size: 16px; padding: 11px 18px; }
+    /* si no, "volver a ver" choca con "abrir carta" en pantallas estrechas */
+    .replay { bottom: 78px; }
     .settings { width: 44px; height: 44px; }
     .panel { width: 200px; }
     .letter-btn { font-size: 15px; padding: 11px 20px; }
@@ -689,7 +703,8 @@
 
   function makeFlowers() {
     flowers = [];
-    const n = q(Math.round(clamp(W / 16, 32, 72)));
+    /* el campo arranca ralo a proposito: la gracia es que ella lo vaya llenando */
+    const n = q(Math.round(clamp(W / 30, 12, 34)));
     for (let i = 0; i < n; i++) {
       const depth = Math.pow(srand(), 0.8);
       const sizeF = lerp(0.5, 1.35, depth);
@@ -2038,7 +2053,9 @@
   function updateFalling(dt) {
     if (petalRainT > 0) petalRainT -= dt;
     const raining = petalRainT > 0;
-    const cap = raining ? (soft ? 90 : 220) : (soft ? 26 : 60);
+    /* la misma cantidad que llena un monitor satura un movil */
+    const amb = Math.round(clamp(W / 16, 24, 60));
+    const cap = raining ? (soft ? 90 : 220) : (soft ? Math.round(amb * 0.45) : amb);
     const rate = raining ? (soft ? 30 : 70) : (soft ? 5 : 12);
     if (falling.length < cap && srand() < dt * rate) spawnPetal(true);
     for (const p of falling) {
@@ -2060,7 +2077,8 @@
   }
 
   function updateHearts(dt) {
-    if (hearts.length < (soft ? 14 : 34) && srand() < dt * (soft ? 0.3 : 0.7)) spawnHeart(rand(0, W), H + rand(0, 40));
+    const maxHearts = Math.round(clamp(W / 40, 12, 34));
+    if (hearts.length < (soft ? Math.round(maxHearts * 0.45) : maxHearts) && srand() < dt * (soft ? 0.3 : 0.7)) spawnHeart(rand(0, W), H + rand(0, 40));
     for (let i = hearts.length - 1; i >= 0; i--) {
       const h = hearts[i];
       h.life += dt;
@@ -2249,7 +2267,7 @@
   let toastTimer = null, pendingToast = null, panelOpen = false;
   const toastEl = document.getElementById("toast");
   function dialogOpen() {
-    return panelOpen || (dedEl.classList.contains("show") && !dedEl.classList.contains("hidden")) || letterEl.classList.contains("show") || cardEl.classList.contains("show");
+    return panelOpen || lovesEl.classList.contains("show") || (dedEl.classList.contains("show") && !dedEl.classList.contains("hidden")) || letterEl.classList.contains("show") || cardEl.classList.contains("show");
   }
   function showToast(msg) {
     if (dialogOpen()) { pendingToast = msg; return; }
@@ -2294,6 +2312,13 @@
   function showLove() {
     if (loveShown) return;
     loveShown = true;
+    stopHints();
+    /* si habia un aviso en pantalla, lo apartamos y vuelve despues del climax */
+    if (toastEl.classList.contains("show")) {
+      if (!pendingToast) pendingToast = toastEl.textContent;
+      toastEl.classList.remove("show");
+      clearTimeout(toastTimer);
+    }
     document.getElementById("lovesText").textContent = GIFT.teQuiero;
     lovesEl.classList.add("show");
     playChime();
@@ -2301,6 +2326,7 @@
     clearTimeout(loveHideTimer);
     loveHideTimer = setTimeout(() => {
       lovesEl.classList.remove("show");
+      flushToast();
       setTimeout(showClosing, 2600);
     }, 12000);
   }
@@ -2660,7 +2686,7 @@
     bakeHills();
     makePollen(); makeFireflies(); makeButterflies(); makeNameConstellation(); makeMemories(); makeBees(); makeLadybugs(); makeDragonflies(); makePond(); makeGarland();
     shooting = []; bursts = []; falling = []; hearts = []; trail = []; rockets = []; sparks = []; birds = []; lanterns = []; lanternsReleased = false;
-    for (let i = 0; i < 35; i++) spawnPetal(false);
+    for (let i = 0, np = Math.round(clamp(W / 26, 14, 35)); i < np; i++) spawnPetal(false);
   }
 
   let builtW = 0, builtH = 0, resizeTimer = null;
