@@ -113,6 +113,8 @@
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
   /* la linea que dirige es mas sobria; los avisos sueltos destacan sobre ella */
   .toast.story { background: rgba(14,12,8,.6); border-color: rgba(255,220,150,.28); color: rgba(255,238,200,.92); }
+  /* si le pedimos que mire al cielo, el texto se quita de en medio */
+  .toast.abajo { top: auto; bottom: 104px; }
 
   .dedication {
     position: fixed; inset: 0; z-index: 5; pointer-events: none;
@@ -243,8 +245,6 @@
     transition: background .3s ease, border-color .3s ease;
   }
   .replay:hover { background: rgba(255,215,120,.16); border-color: rgba(255,220,150,.9); }
-  .replay.keep { border-color: rgba(255,220,150,.75); color: #ffeec4; background: rgba(46,33,12,.62); }
-  .replay.keep:hover { background: rgba(255,215,120,.22); }
 
   .letter-btn.beat { animation: letterBeat 2.6s ease-in-out infinite; }
   @keyframes letterBeat {
@@ -393,7 +393,7 @@
       </g>
     </svg>
     <div class="intro-title">Flores Amarillas</div>
-    <div class="intro-sub">para Ericka</div>
+    <div class="intro-sub" id="introSub"></div>
     <button class="intro-btn" id="introBtn">toca para empezar</button>
   </div>
 </div>
@@ -417,7 +417,6 @@
 <div class="closing" id="closing"></div>
 <div class="endbar" id="endbar">
   <button class="replay" id="replay">volver a ver</button>
-  <button class="replay keep" id="keep">&#9733; guardar esta noche</button>
 </div>
 
 <div class="dedication" id="dedication">
@@ -462,6 +461,9 @@
   const GIFT = {
     para: "Ericka",
     de: "con cariño, para ti",
+    // Como te diriges a ella. Cambia "amor" por lo que le digas tu.
+    paraTi: "para ti, Ericka",                 // bajo el titulo de la portada
+    cabeceraCarta: "Para ti, mi amor \u2764",   // encabezado de la carta
     titulo: "Feliz Día de la Primavera",
     fecha: "21 · Septiembre",
     nombreEstelar: "ERICKA",                 // se dibuja con estrellas en el cielo
@@ -530,7 +532,7 @@
     gateOpen = false;
     gateEl.hidden = false;
     gateEl.addEventListener("pointerdown", e => e.stopPropagation());
-    document.getElementById("gateFor").textContent = "para " + GIFT.para;
+    document.getElementById("gateFor").textContent = GIFT.paraTi || ("para " + GIFT.para);
     let cuando = "";
     try {
       cuando = target.toLocaleDateString("es-ES", { day: "numeric", month: "long" }) +
@@ -710,7 +712,7 @@
   function makeFlowers() {
     flowers = [];
     /* el campo arranca ralo a proposito: la gracia es que ella lo vaya llenando */
-    const n = q(Math.round(clamp(W / 30, 12, 34)));
+    const n = q(Math.round(clamp(W / 40, 9, 20)));
     for (let i = 0; i < n; i++) {
       const depth = Math.pow(srand(), 0.8);
       const sizeF = lerp(0.5, 1.35, depth);
@@ -834,7 +836,7 @@
     const cols = text.length * 6;
     /* ancho generoso, pero sin comerse el cielo que queda sobre el horizonte */
     const scale = Math.min(W * 0.55 / cols, horizon * 0.042);
-    const ox = W * 0.5 - (cols * scale) / 2, oy = horizon * 0.30 - (7 * scale) / 2;
+    const ox = W * 0.5 - (cols * scale) / 2, oy = horizon * 0.36 - (7 * scale) / 2;
     for (let li = 0; li < text.length; li++) {
       const glyph = FONT5x7[text[li]];
       if (!glyph) continue;
@@ -2283,7 +2285,7 @@
   let msgQueue = [], showingMsg = false, showingHint = false;
   /* storyMsg es la linea del acto en curso: se queda mientras le toca a ella
      hacer algo. Los avisos sueltos pasan por delante y luego vuelve. */
-  let storyMsg = null, showingStory = false;
+  let storyMsg = null, showingStory = false, storyAbajo = false;
   const toastEl = document.getElementById("toast");
 
   function dialogOpen() {
@@ -2295,6 +2297,7 @@
     showingHint = !!isHint;
     showingStory = false;
     toastEl.classList.remove("story");
+    toastEl.classList.toggle("abajo", storyAbajo);
     toastEl.textContent = msg;
     toastEl.classList.add("show");
     clearTimeout(toastTimer);
@@ -2311,16 +2314,19 @@
     clearTimeout(toastTimer); clearTimeout(gapTimer);
     showingMsg = false; showingHint = false; showingStory = true;
     toastEl.textContent = storyMsg;
+    toastEl.classList.toggle("abajo", storyAbajo);
     toastEl.classList.add("show", "story");
   }
 
-  function setStory(msg) {
+  function setStory(msg, abajo) {
     storyMsg = msg;
+    storyAbajo = !!abajo;
     if (!showingMsg) presentStory();
   }
 
   function clearStory() {
     storyMsg = null;
+    storyAbajo = false;
     if (showingStory) {
       showingStory = false;
       toastEl.classList.remove("show", "story");
@@ -2354,9 +2360,9 @@
   /* aparta lo que haya en pantalla; con requeue vuelve despues */
   function hideMsgNow(requeue) {
     if (requeue && !showingHint && !showingStory && toastEl.classList.contains("show") && !pendingToast) pendingToast = toastEl.textContent;
-    toastEl.classList.remove("show", "story");
+    toastEl.classList.remove("show", "story", "abajo");
     clearTimeout(toastTimer); clearTimeout(gapTimer);
-    showingMsg = false; showingHint = false; showingStory = false;
+    showingMsg = false; showingHint = false; showingStory = false; storyAbajo = false;
   }
 
   function flushToast() {
@@ -2409,10 +2415,6 @@
   }
   replayEl.addEventListener("pointerdown", e => e.stopPropagation());
   replayEl.addEventListener("click", e => { e.stopPropagation(); replayFinale(); });
-  /* que no se vaya con las manos vacías: la foto del jardín, a un toque */
-  const keepEl = document.getElementById("keep");
-  keepEl.addEventListener("pointerdown", e => e.stopPropagation());
-  keepEl.addEventListener("click", e => { e.stopPropagation(); snapshot(); });
 
   function petalRain() { petalRainT = 6; }
   function lanternRelease() { for (let i = 0; i < (soft ? 8 : 16); i++) spawnLantern(); }
@@ -2448,7 +2450,7 @@
   let letterPage = 0, lastFocus = null, letterDir = 1;
 
   function buildLetter() {
-    document.getElementById("letterHead").textContent = "Para " + GIFT.para;
+    document.getElementById("letterHead").textContent = GIFT.cabeceraCarta || ("Para " + GIFT.para);
     const d = document.getElementById("letterDots");
     d.innerHTML = "";
     GIFT.carta.forEach((_, i) => {
@@ -2473,8 +2475,7 @@
     document.getElementById("letterNext").style.visibility = letterPage < GIFT.carta.length - 1 ? "visible" : "hidden";
     if (letterPage === GIFT.carta.length - 1 && !finaleDone) {
       finaleDone = true;
-      lovePending = true;
-      setTimeout(() => { launchFireworks(12); showToast("has llegado al final... y esto es solo el comienzo"); }, 900);
+      lovePending = true;   /* los fuegos esperan a que cierre la carta */
     }
   }
   function gotoPage(i) {
@@ -2506,11 +2507,20 @@
     letterEl.classList.add("show"); renderLetter();
     letterEl.focus();
   }
+  let fuegosHechos = false;
   function closeLetter() {
     letterEl.classList.remove("show");
     if (lastFocus && lastFocus.focus) lastFocus.focus();
     flushToast();
-    setTimeout(tryShowLove, 900);
+    if (finaleDone && !fuegosHechos) {
+      /* la leyo entera: primero el cielo se rompe en fuegos, luego el te quiero */
+      fuegosHechos = true;
+      launchFireworks(16);
+      showToast("has llegado al final... y esto es solo el comienzo");
+      setTimeout(tryShowLove, 5200);
+    } else {
+      setTimeout(tryShowLove, 900);
+    }
   }
 
   const letterBtn = document.getElementById("letterBtn");
@@ -2780,7 +2790,7 @@
     },
     {
       id: "nombre",
-      enter() { setStory("mira hacia arriba"); this.said = false; },
+      enter() { setStory("mira hacia arriba", true); this.said = false; },
       tick(T) {
         if (T > 4.5 && !this.said) {
           this.said = true;
@@ -2963,10 +2973,14 @@
   pal = getPalette(dayT);
   buildDedication();
   buildLetter();
+  document.getElementById("introSub").textContent = GIFT.paraTi || ("para " + GIFT.para);
   loadGarden();
   returning = flowersPlanted > 0;
   /* ?libre salta el guion; tambien se salta si ya lo vivio entero otro dia */
   if (guionVisto || /(^|[?&#])libre/.test(location.search + location.hash)) goFree();
+  /* el guion empieza siempre con el campo desnudo: las flores son las que
+     ella plante. Asi no arranca sobre un muro de flores de otra sesion. */
+  if (!freeMode) { plantedSpots = []; flowersPlanted = 0; milestoneIdx = 0; }
   updateChip();
   resize();
   requestAnimationFrame(loop);
