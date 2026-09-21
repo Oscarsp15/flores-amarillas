@@ -494,7 +494,7 @@
     recuerdos: [
       { titulo: "El día que te conocí", texto: "Sin saberlo, ese día empezó a florecer algo que todavía no se detiene. Llegaste y, sin hacer ruido, te quedaste en todo." },
       { titulo: "Tu risa", texto: "Hay sonidos que ordenan el día. El tuyo es mi favorito: cuando te ríes, hasta el campo se pone más amarillo." },
-      { titulo: "Aquella tarde", texto: "No hizo falta nada especial. Solo tú, el tiempo pasando despacio y yo pensando que no quería estar en ningún otro lugar." },
+      { titulo: "Aquella noche", texto: "No hizo falta nada especial. Solo tú, el tiempo pasando despacio y yo pensando que no quería estar en ningún otro lugar." },
       { titulo: "Lo que viene", texto: "Todavía nos quedan primaveras por ver. Y si de mí depende, quiero verlas todas contigo." }
     ],
     carta: [
@@ -1501,6 +1501,100 @@
     }
   }
 
+  /* el avion del cartel: el "te quiero" no se escribe encima de la pantalla,
+     cruza el cielo tirando de una pancarta, como los de la playa */
+  let plane = null;
+  function launchPlane(text) {
+    const cruce = 19;                      /* segundos de punta a punta */
+    plane = {
+      text: text || "",
+      y: horizon * 0.17,                   /* por encima del nombre en estrellas */
+      x: -W * 0.62,
+      vx: (W * 1.7 + W * 0.62) / cruce,
+      t: 0, life: 0
+    };
+  }
+
+  function updatePlane(dt) {
+    if (!plane) return;
+    plane.t += dt;
+    plane.x += plane.vx * dt;
+    plane.life = clamp(plane.t / 1.2, 0, 1);
+    if (plane.x > W * 1.75) plane = null;
+  }
+
+  function drawPlane() {
+    if (!plane) return;
+    const p = plane;
+    const fs = clamp(Math.min(W * 0.055, H * 0.032), 15, 40);
+    const padX = fs * 0.85, alto = fs * 1.95;
+    ctx.save();
+    ctx.font = "italic " + fs + "px 'Cormorant Garamond', Georgia, serif";
+    const ancho = Math.min(W * 0.82, ctx.measureText(p.text).width + padX * 2);
+    const bx = p.x - fs * 1.6 - ancho;     /* la pancarta va detras */
+    const onda = Math.sin(p.t * 2.1) * fs * 0.22;
+
+    /* cuerdas */
+    ctx.globalAlpha = p.life * 0.55;
+    ctx.strokeStyle = "rgba(255,238,200,.6)";
+    ctx.lineWidth = Math.max(1, fs * 0.05);
+    ctx.beginPath();
+    ctx.moveTo(p.x - fs * 0.5, p.y);
+    ctx.lineTo(bx + ancho, p.y + onda - alto * 0.3);
+    ctx.moveTo(p.x - fs * 0.5, p.y);
+    ctx.lineTo(bx + ancho, p.y + onda + alto * 0.3);
+    ctx.stroke();
+
+    /* pancarta iluminada */
+    ctx.globalAlpha = p.life;
+    ctx.translate(bx + ancho / 2, p.y + onda);
+    ctx.rotate(Math.sin(p.t * 2.1 + 1) * 0.035);
+    const g = ctx.createLinearGradient(0, -alto / 2, 0, alto / 2);
+    g.addColorStop(0, "rgba(46,32,14,.92)");
+    g.addColorStop(1, "rgba(26,18,8,.92)");
+    ctx.fillStyle = g;
+    ctx.shadowColor = "rgba(255,200,110,.55)"; ctx.shadowBlur = fs * 1.2;
+    const r = alto * 0.28;
+    ctx.beginPath();
+    ctx.moveTo(-ancho / 2 + r, -alto / 2);
+    ctx.arcTo(ancho / 2, -alto / 2, ancho / 2, alto / 2, r);
+    ctx.arcTo(ancho / 2, alto / 2, -ancho / 2, alto / 2, r);
+    ctx.arcTo(-ancho / 2, alto / 2, -ancho / 2, -alto / 2, r);
+    ctx.arcTo(-ancho / 2, -alto / 2, ancho / 2, -alto / 2, r);
+    ctx.closePath(); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "rgba(255,215,130,.75)"; ctx.lineWidth = Math.max(1, fs * 0.06);
+    ctx.stroke();
+    ctx.fillStyle = "#fff3d2";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = "italic " + fs + "px 'Cormorant Garamond', Georgia, serif";
+    ctx.fillText(p.text, 0, fs * 0.06);
+    ctx.restore();
+
+    /* la avioneta */
+    ctx.save();
+    ctx.globalAlpha = p.life;
+    ctx.translate(p.x, p.y);
+    const s2 = fs * 0.5;
+    ctx.fillStyle = "#2b2418";
+    ctx.beginPath();
+    ctx.moveTo(s2 * 1.5, 0); ctx.lineTo(-s2 * 1.1, -s2 * 0.42);
+    ctx.lineTo(-s2 * 1.4, 0); ctx.lineTo(-s2 * 1.1, s2 * 0.42);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(s2 * 0.1, 0); ctx.lineTo(-s2 * 0.7, -s2 * 1.15);
+    ctx.lineTo(-s2 * 0.2, -s2 * 0.1); ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(s2 * 0.1, 0); ctx.lineTo(-s2 * 0.7, s2 * 1.15);
+    ctx.lineTo(-s2 * 0.2, s2 * 0.1); ctx.closePath(); ctx.fill();
+    /* luz de posicion parpadeando */
+    const par = 0.35 + 0.65 * Math.abs(Math.sin(p.t * 3.4));
+    ctx.fillStyle = "rgba(255,120,90," + par + ")";
+    ctx.beginPath(); ctx.arc(-s2 * 1.35, 0, Math.max(1, s2 * 0.22), 0, 6.2832); ctx.fill();
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+
   function spawnShootingStar() {
     const fromLeft = srand() < 0.5;
     shooting.push({
@@ -2133,7 +2227,7 @@
     updateDay(dt); updateWind(dt); updateParallax(dt); updateFlowers();
     updatePollen(dt); updateFireflies(dt); updateButterflies(dt); updateBees(dt); updateBirds(dt); updateLadybugs(dt); updateDragonflies(dt); updateLanterns(dt);
     updateFalling(dt); updateBursts(dt); updateHearts(dt); updateTrail(dt); updateFireworks(dt);
-    updateGuion(dt);
+    updatePlane(dt); updateGuion(dt);
   }
 
   function render(dt) {
@@ -2148,6 +2242,7 @@
     for (const b of butterflies) drawButterfly(b);
     for (const b of bees) drawBee(b);
     for (const d of dragonflies) drawDragonfly(d);
+    drawPlane();
     drawFallingPetals(); drawTrail(); drawPollen(); drawFireflies(); drawHearts(); drawBursts(); drawFireworks(); drawVignette(); drawCursor(dt);
   }
 
@@ -2377,25 +2472,17 @@
   const closingEl = document.getElementById("closing");
   const replayEl = document.getElementById("replay");
   const endbarEl = document.getElementById("endbar");
-  let loveShown = false, lovePending = false, loveHideTimer = null, closeTimer = null;
+  let closeTimer = null;
 
-  function showLove() {
-    if (loveShown) return;
-    loveShown = true;
-    /* el final limpia la mesa: ningun aviso pendiente sobrevive al climax */
+  /* el "te quiero" cruza el cielo colgado de una avioneta */
+  function volarTeQuiero() {
+    /* el momento limpia la mesa: ningun aviso pendiente le sobrevive */
     hideMsgNow(false);
     msgQueue.length = 0;
     pendingToast = null;
-    document.getElementById("lovesText").textContent = GIFT.teQuiero;
-    lovesEl.classList.add("show");
+    launchPlane(GIFT.teQuiero);
     playChime();
     for (let i = 0; i < 44; i++) spawnHeart(rand(0, W), H + rand(0, 140));
-    clearTimeout(loveHideTimer);
-    loveHideTimer = setTimeout(() => {
-      lovesEl.classList.remove("show");
-      /* silencio antes de la ultima linea: el final necesita respirar */
-      setTimeout(showClosing, 3600);
-    }, 14000);
   }
   function showClosing() {
     closingEl.textContent = GIFT.cierre;
@@ -2409,12 +2496,12 @@
     }, 9000);
   }
   function replayFinale() {
-    clearTimeout(loveHideTimer); clearTimeout(closeTimer);
+    clearTimeout(closeTimer);
     endbarEl.classList.remove("show");
     closingEl.classList.remove("show");
-    lovesEl.classList.remove("show");
     launchFireworks(10);
-    setTimeout(() => { loveShown = false; showLove(); }, 900);
+    setTimeout(volarTeQuiero, 900);
+    setTimeout(showClosing, 26000);
   }
   replayEl.addEventListener("pointerdown", e => e.stopPropagation());
   replayEl.addEventListener("click", e => { e.stopPropagation(); replayFinale(); });
@@ -2438,15 +2525,6 @@
     s.fn();
     showToast("sorpresa: " + s.name);
     playChime();
-  }
-
-  function tryShowLove() {
-    if (loveShown || !lovePending) return;
-    const dedOpen = dedEl.classList.contains("show") && !dedEl.classList.contains("hidden");
-    const letterOpen = letterEl.classList.contains("show");
-    if (dedOpen || letterOpen) return;
-    lovePending = false;
-    showLove();
   }
 
   const letterEl = document.getElementById("letter");
@@ -2477,8 +2555,7 @@
     document.getElementById("letterPrev").style.visibility = letterPage > 0 ? "visible" : "hidden";
     document.getElementById("letterNext").style.visibility = letterPage < GIFT.carta.length - 1 ? "visible" : "hidden";
     if (letterPage === GIFT.carta.length - 1 && !finaleDone) {
-      finaleDone = true;
-      lovePending = true;   /* los fuegos esperan a que cierre la carta */
+      finaleDone = true;   /* los fuegos esperan a que cierre la carta */
     }
   }
   function gotoPage(i) {
@@ -2487,15 +2564,8 @@
     letterPage = ni;
     renderLetter();
   }
-  /* si abre la carta o un recuerdo mientras corre el final, no se lo pisamos:
-     lo apartamos y el "te quiero" vuelve a empezar cuando cierre */
+  /* si abre la carta o un recuerdo mientras corre el cierre, no se lo pisamos */
   function pauseFinale() {
-    if (lovesEl.classList.contains("show")) {
-      lovesEl.classList.remove("show");
-      clearTimeout(loveHideTimer);
-      loveShown = false;
-      lovePending = true;
-    }
     if (closingEl.classList.contains("show")) {
       closingEl.classList.remove("show");
       clearTimeout(closeTimer);
@@ -2516,13 +2586,12 @@
     if (lastFocus && lastFocus.focus) lastFocus.focus();
     flushToast();
     if (finaleDone && !fuegosHechos) {
-      /* la leyo entera: primero el cielo se rompe en fuegos, luego el te quiero */
+      /* la leyo entera: fuegos, y despues la ultima linea. Aqui se acaba. */
       fuegosHechos = true;
+      hideMsgNow(false); msgQueue.length = 0; pendingToast = null;
       launchFireworks(16);
-      showToast("has llegado al final... y esto es solo el comienzo");
-      setTimeout(tryShowLove, 5200);
-    } else {
-      setTimeout(tryShowLove, 900);
+      showToast("y hasta aquí llega lo que sé decir con palabras");
+      setTimeout(showClosing, 7000);
     }
   }
 
@@ -2566,7 +2635,6 @@
     cardEl.classList.remove("show");
     if (lastFocus && lastFocus.focus) lastFocus.focus();
     flushToast();
-    setTimeout(tryShowLove, 900);
   }
   cardEl.addEventListener("pointerdown", e => e.stopPropagation());
   document.getElementById("cardClose").addEventListener("click", closeCard);
@@ -2672,7 +2740,7 @@
           showCard(m.data.titulo, m.data.texto);
           if (!m.read) {
             m.read = true; playChime();
-            if (memories.every(x => x.read)) { launchFireworks(14); showToast("guardaste todos los recuerdos en el corazón"); lovePending = true; setTimeout(tryShowLove, 3200); }
+            if (memories.every(x => x.read)) { launchFireworks(14); showToast("guardaste todos los recuerdos en el corazón"); }
           }
             return;
         }
@@ -2742,7 +2810,6 @@
     e.stopPropagation();
     dedEl.classList.add("hidden");
     if (pendingToast) flushToast();
-    setTimeout(tryShowLove, 1400);
     if (freeMode) {
       /* ya vivio el guion otro dia: el jardin es suyo desde el primer momento */
       letterBtn.classList.remove("off");
@@ -2827,11 +2894,21 @@
       max: 55
     },
     {
+      /* el climax: cruza una avioneta con el cartel */
+      id: "avion",
+      enter() {
+        setStory("espera... ¿oyes eso? mira al cielo", true);
+        volarTeQuiero();
+      },
+      tick(T) { if (T > 5.5 && storyMsg) clearStory(); },
+      max: 22
+    },
+    {
       id: "carta",
       enter() {
         letterBtn.classList.remove("off");
         letterBtn.classList.add("beat");
-        setStory("y ahora sí: abre la carta y léela hasta el final");
+        setStory("no te vayas todavía: me queda una última carta");
       },
       done: () => finaleDone,
       max: 900,
@@ -3119,7 +3196,8 @@
     build();
     updateChip();
     setPanel(false);
-    showToast("el jardín vuelve a empezar: recarga para verlo desde el principio");
+    showToast("el jardín vuelve a empezar...");
+    setTimeout(() => location.reload(), 1900);
   }
   resetBtn.addEventListener("pointerdown", e => e.stopPropagation());
   resetBtn.addEventListener("click", e => { e.stopPropagation(); resetGarden(); });
