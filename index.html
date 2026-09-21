@@ -192,7 +192,7 @@
   }
   .letter-nav { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 24px; }
   .letter-nav button {
-    width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+    width: 44px; height: 44px; border-radius: 50%; cursor: pointer;
     border: 1px solid rgba(150,110,50,.45); background: rgba(255,255,255,.35);
     color: #7a4a12; font-size: 20px; line-height: 1; transition: all .3s;
   }
@@ -238,16 +238,22 @@
   }
   .closing.show { opacity: 1; transform: translate(-50%, 0); }
 
-  .replay {
+  .endbar {
     position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 7;
-    padding: 10px 22px; border-radius: 999px; cursor: pointer;
-    border: 1px solid rgba(255,220,150,.45); background: rgba(20,14,6,.45); color: var(--gold);
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 92vw;
+    opacity: 0; pointer-events: none; transition: opacity 1.2s ease;
+  }
+  .endbar.show { opacity: 1; pointer-events: auto; }
+  .replay {
+    padding: 11px 22px; border-radius: 999px; cursor: pointer;
+    border: 1px solid rgba(255,220,150,.45); background: rgba(20,14,6,.55); color: var(--gold);
     font-family: inherit; font-size: 15px; letter-spacing: 1px;
     -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
-    opacity: 0; pointer-events: none; transition: opacity 1s ease, background .3s ease;
+    transition: background .3s ease, border-color .3s ease;
   }
-  .replay.show { opacity: 1; pointer-events: auto; }
   .replay:hover { background: rgba(255,215,120,.16); border-color: rgba(255,220,150,.9); }
+  .replay.keep { border-color: rgba(255,220,150,.75); color: #ffeec4; background: rgba(46,33,12,.62); }
+  .replay.keep:hover { background: rgba(255,215,120,.22); }
 
   .letter-btn.beat { animation: letterBeat 2.6s ease-in-out infinite; }
   @keyframes letterBeat {
@@ -339,7 +345,7 @@
     .hint { bottom: 74px; }
     .toast { top: 76px; max-width: 84vw; font-size: 16px; padding: 11px 18px; }
     /* si no, "volver a ver" choca con "abrir carta" en pantallas estrechas */
-    .replay { bottom: 78px; }
+    .endbar { bottom: 78px; }
     .settings { width: 44px; height: 44px; }
     .panel { width: 200px; }
     .letter-btn { font-size: 15px; padding: 11px 20px; }
@@ -419,7 +425,10 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="loves" id="loves"><span id="lovesText"></span></div>
 <div class="closing" id="closing"></div>
-<button class="replay" id="replay">volver a ver</button>
+<div class="endbar" id="endbar">
+  <button class="replay" id="replay">volver a ver</button>
+  <button class="replay keep" id="keep">&#9733; guardar esta noche</button>
+</div>
 
 <div class="dedication" id="dedication">
   <div class="ded-inner">
@@ -483,6 +492,7 @@
     teQuiero: "Te quiero, Ericka",
     cierre: "gracias por florecer conmigo",
     logros: [
+      { n: 1,  texto: "Esa primera flor es tuya. El jardín ya es un poco tuyo también." },
       { n: 5,  texto: "Cinco flores... y ya no puedo dejar de pensar en ti." },
       { n: 12, texto: "Doce flores: una por cada mes que quiero a tu lado." },
       { n: 21, texto: "Veintiuna flores, como este 21 de septiembre. Todo florece contigo." },
@@ -634,7 +644,8 @@
   let rockets = [], sparks = [], fireworkQueue = 0, fireworkTimer = 0;
   let memories = [], nameConst = [], birds = [], bees = [], ladybugs = [];
   let lanterns = [], dragonflies = [], koi = [], pond = null, garland = null, lanternsReleased = false;
-  let flowersPlanted = 0, milestoneIdx = 0, nightHintShown = false, finaleDone = false;
+  let flowersPlanted = 0, milestoneIdx = 0, nightHintShown = false, nameHintShown = false, finaleDone = false;
+  let returning = false;   /* ya habia estado aqui: sus flores siguen plantadas */
   let soft = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const q = (n) => Math.max(1, Math.round(n * (soft ? 0.5 : 1)));
   let auroraBoost = 0, petalRainT = 0;
@@ -825,8 +836,9 @@
     nameConst = [];
     const text = (GIFT.nombreEstelar || "").toUpperCase();
     if (!text) return;
-    const scale = Math.min(W, H) * 0.011;
     const cols = text.length * 6;
+    /* ancho generoso, pero sin comerse el cielo que queda sobre el horizonte */
+    const scale = Math.min(W * 0.55 / cols, horizon * 0.042);
     const ox = W * 0.5 - (cols * scale) / 2, oy = horizon * 0.30 - (7 * scale) / 2;
     for (let li = 0; li < text.length; li++) {
       const glyph = FONT5x7[text[li]];
@@ -844,7 +856,7 @@
     for (let i = 0; i < n; i++) {
       memories.push({
         x: W * (0.16 + 0.68 * (n === 1 ? 0.5 : i / (n - 1))),
-        y: horizon * 0.46 + Math.sin(i * 1.9) * horizon * 0.06,
+        y: horizon * 0.54 + Math.sin(i * 1.9) * horizon * 0.06,
         ph: rand(0, 6.28), read: wasRead[i] === true, data: GIFT.recuerdos[i]
       });
     }
@@ -1459,16 +1471,17 @@
   }
 
   function drawNameConstellation() {
-    const a = clamp((pal.star - 0.6) / 0.4, 0, 1);
+    const a = clamp((pal.star - 0.38) / 0.32, 0, 1);
     if (a <= 0.01 || !nameConst.length) return;
+    const r = clamp(Math.min(W, H) * 0.014, 7, 13);
     ctx.save(); ctx.globalCompositeOperation = "lighter";
     for (const p of nameConst) {
-      const tw = 0.6 + 0.4 * Math.sin(t * 2.2 + p.tw);
-      const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 6);
-      g.addColorStop(0, `rgba(255,236,180,${0.7 * tw * a})`); g.addColorStop(1, "rgba(255,236,180,0)");
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, 6.2832); ctx.fill();
-      ctx.fillStyle = `rgba(255,250,225,${0.95 * tw * a})`;
-      ctx.beginPath(); ctx.arc(p.x, p.y, 1.5, 0, 6.2832); ctx.fill();
+      const tw = 0.62 + 0.38 * Math.sin(t * 2.2 + p.tw);
+      const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+      g.addColorStop(0, `rgba(255,238,186,${0.85 * tw * a})`); g.addColorStop(1, "rgba(255,238,186,0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = `rgba(255,252,232,${tw * a})`;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r * 0.22, 0, 6.2832); ctx.fill();
     }
     ctx.restore();
   }
@@ -1479,7 +1492,7 @@
     for (const m of memories) {
       const pulse = 0.5 + 0.5 * Math.sin(t * 1.4 + m.ph);
       const near = Math.hypot(mouseX * W - m.x, mouseY * H - m.y) < 42;
-      const s = (m.read ? 5 : 7) + (near ? 4 : 0) + pulse * 2;
+      const s = (m.read ? 5.5 : 8) + (near ? 4 : 0) + pulse * 2;
       const col = m.read ? "255,200,150" : "255,170,200";
       ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = a * (m.read ? 0.55 : 1);
       const g = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, s * 3.2);
@@ -1974,9 +1987,14 @@
     dayClock += dt;
     dayT = (0.12 + dayClock / DAY_LEN) % 1;
     pal = getPalette(dayT);
-    if (!nightHintShown && pal.star > 0.45 && memories.length) {
+    /* dos momentos distintos: lo primero que tiene que ver es su nombre */
+    if (!nameHintShown && pal.star > 0.6 && nameConst.length) {
+      nameHintShown = true;
+      showToast("mira hacia arriba: tu nombre está escrito en las estrellas");
+    }
+    if (!nightHintShown && pal.star > 0.92 && memories.length) {
       nightHintShown = true;
-      showToast("mira el cielo: las estrellas rosadas guardan un recuerdo");
+      showToast("y las estrellas rosadas guardan recuerdos: tócalas");
     }
     if (!lanternsReleased && pal.star > 0.4) {
       lanternsReleased = true;
@@ -2129,8 +2147,11 @@
   }
 
   function render(dt) {
-    drawSky(); drawStars(); drawAurora(dt); drawHeartConstellation(); drawNameConstellation(); drawMemories();
-    drawShootingStars(dt); drawMoon(); drawSun(); drawGodRays(); drawClouds(dt); drawBirds(); drawHills(); drawHorizonHaze();
+    drawSky(); drawStars(); drawAurora(dt); drawHeartConstellation();
+    drawShootingStars(dt); drawMoon(); drawSun(); drawGodRays(); drawClouds(dt);
+    /* su nombre y los recuerdos van por delante de las nubes: son lo que tiene que ver */
+    drawNameConstellation(); drawMemories();
+    drawBirds(); drawHills(); drawHorizonHaze();
     drawGround(); drawPond(); drawGrassBlades(); drawGarland(); drawLanterns();
     for (const f of flowers) drawFlower(f);
     for (const b of ladybugs) drawLadybug(b);
@@ -2285,8 +2306,17 @@
   const hintEl = document.getElementById("hint");
   const isTouch = window.matchMedia("(hover: none)").matches || window.innerWidth < 600;
   const HINTS = isTouch
-    ? ["toca la pantalla para plantar flores", "toca una estrella fugaz para pedir un deseo", "toca la estrella de abajo para una sorpresa", "de noche, las estrellas rosadas guardan recuerdos", 'toca "abrir carta" cuando quieras']
-    : ["mueve el cursor para crear viento", "haz clic para plantar una flor", "toca una estrella fugaz para pedir un deseo", "toca la estrella de abajo para una sorpresa", "de noche, las estrellas rosadas guardan recuerdos", 'toca "abrir carta" cuando quieras'];
+    ? ["toca donde quieras: cada toque hace nacer una flor",
+       "si pasa una estrella fugaz, atrápala y pide un deseo",
+       "la estrellita de abajo guarda sorpresas",
+       "quédate al anochecer: el cielo tiene algo que decirte",
+       "y cuando quieras, abre la carta"]
+    : ["mueve el cursor: el viento te sigue",
+       "haz clic donde quieras: cada clic hace nacer una flor",
+       "si pasa una estrella fugaz, atrápala y pide un deseo",
+       "la estrellita de abajo guarda sorpresas",
+       "quédate al anochecer: el cielo tiene algo que decirte",
+       "y cuando quieras, abre la carta"];
   let hintIdx = 0, hintTimer = null, hintActive = true;
   function nextHint() {
     if (!hintActive || hintIdx >= HINTS.length) return;
@@ -2307,6 +2337,7 @@
   const lovesEl = document.getElementById("loves");
   const closingEl = document.getElementById("closing");
   const replayEl = document.getElementById("replay");
+  const endbarEl = document.getElementById("endbar");
   let loveShown = false, lovePending = false, loveHideTimer = null, closeTimer = null;
 
   function showLove() {
@@ -2336,12 +2367,12 @@
     clearTimeout(closeTimer);
     closeTimer = setTimeout(() => {
       closingEl.classList.remove("show");
-      replayEl.classList.add("show");
+      endbarEl.classList.add("show");
     }, 6000);
   }
   function replayFinale() {
     clearTimeout(loveHideTimer); clearTimeout(closeTimer);
-    replayEl.classList.remove("show");
+    endbarEl.classList.remove("show");
     closingEl.classList.remove("show");
     lovesEl.classList.remove("show");
     launchFireworks(10);
@@ -2349,6 +2380,10 @@
   }
   replayEl.addEventListener("pointerdown", e => e.stopPropagation());
   replayEl.addEventListener("click", e => { e.stopPropagation(); replayFinale(); });
+  /* que no se vaya con las manos vacías: la foto del jardín, a un toque */
+  const keepEl = document.getElementById("keep");
+  keepEl.addEventListener("pointerdown", e => e.stopPropagation());
+  keepEl.addEventListener("click", e => { e.stopPropagation(); snapshot(); });
 
   function petalRain() { petalRainT = 6; }
   function lanternRelease() { for (let i = 0; i < (soft ? 8 : 16); i++) spawnLantern(); }
@@ -2437,6 +2472,23 @@
   letterBtn.addEventListener("pointerdown", e => e.stopPropagation());
   letterBtn.addEventListener("click", e => { e.stopPropagation(); openLetter(); });
   letterEl.addEventListener("pointerdown", e => e.stopPropagation());
+  /* en el móvil se pasa página con el dedo, como un cuaderno */
+  (() => {
+    const paper = letterEl.querySelector(".letter-paper");
+    let sx = 0, sy = 0, live = false;
+    paper.addEventListener("touchstart", ev => {
+      if (ev.touches.length !== 1) { live = false; return; }
+      sx = ev.touches[0].clientX; sy = ev.touches[0].clientY; live = true;
+    }, { passive: true });
+    paper.addEventListener("touchend", ev => {
+      if (!live) return;
+      live = false;
+      const p = ev.changedTouches[0];
+      const dx = p.clientX - sx, dy = p.clientY - sy;
+      /* horizontal de verdad, para no robarle el scroll al texto */
+      if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.6) gotoPage(letterPage + (dx < 0 ? 1 : -1));
+    }, { passive: true });
+  })();
   document.getElementById("letterPrev").addEventListener("click", () => gotoPage(letterPage - 1));
   document.getElementById("letterNext").addEventListener("click", () => gotoPage(letterPage + 1));
   document.getElementById("letterClose").addEventListener("click", closeLetter);
@@ -2614,7 +2666,7 @@
     const parts = [];
     const d = daysText();
     if (d) parts.push(d);
-    if (flowersPlanted > 0) parts.push("\u273F " + flowersPlanted + (flowersPlanted === 1 ? " flor" : " flores"));
+    if (flowersPlanted > 0) parts.push("\u273F " + flowersPlanted + (flowersPlanted === 1 ? " flor tuya" : " flores tuyas"));
     el.textContent = parts.join("  ·  ");
     el.classList.toggle("show", parts.length > 0);
   }
@@ -2633,9 +2685,14 @@
     dedEl.classList.add("hidden");
     letterBtn.classList.remove("off");
     if (pendingToast) flushToast();
-    else showToast('toca "abrir carta" cuando quieras leer un poco más');
+    else if (returning) {
+      showToast("tus flores siguen aquí: te estaban esperando");
+      setTimeout(() => showToast("y la carta también, ahí abajo"), 7000);
+    } else {
+      showToast("ahí abajo te dejé una carta, para cuando quieras");
+    }
     setTimeout(tryShowLove, 1400);
-    setTimeout(nextHint, 2200);
+    setTimeout(nextHint, returning ? 9000 : 2200);
     setTimeout(() => {
       if (!letterOpened) {
         letterBtn.classList.add("beat");
@@ -2727,6 +2784,7 @@
   buildDedication();
   buildLetter();
   loadGarden();
+  returning = flowersPlanted > 0;
   updateChip();
   resize();
   requestAnimationFrame(loop);
