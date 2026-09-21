@@ -44,20 +44,8 @@
     font-family: 'Cormorant Garamond', Georgia, serif; font-size: 19px; line-height: 1.7;
   }
 
-  .hint {
-    position: fixed; left: 50%; bottom: 30px; transform: translate(-50%, 10px);
-    z-index: 6; pointer-events: none; text-align: center; max-width: 88vw;
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: clamp(15px, 3.8vw, 18px); letter-spacing: .3px;
-    padding: 9px 18px; border-radius: 999px;
-    background: rgba(8,10,16,.52); -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
-    color: rgba(255, 240, 205, .92); text-shadow: 0 2px 12px rgba(0,0,0,.9);
-    opacity: 0; transition: opacity 1.5s ease, transform 1.5s ease;
-  }
-  .hint.show { opacity: 1; transform: translate(-50%, 0); }
-
   .settings {
-    position: fixed; top: 16px; right: 16px; z-index: 8;
+    position: fixed; top: 16px; right: 16px; z-index: 12;
     width: 46px; height: 46px; border-radius: 50%; cursor: pointer;
     border: 1px solid rgba(255,220,150,.4); background: rgba(20,14,6,.45); color: var(--gold);
     display: grid; place-items: center;
@@ -68,7 +56,7 @@
   .settings.on { color: #fff4cf; box-shadow: 0 0 20px rgba(255,215,120,.5); }
 
   .panel {
-    position: fixed; top: 70px; right: 16px; z-index: 8; width: 216px;
+    position: fixed; top: 70px; right: 16px; z-index: 12; width: 216px;
     padding: 8px 14px; border-radius: 14px;
     background: rgba(14,12,8,.82); border: 1px solid rgba(255,220,150,.3);
     -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
@@ -115,7 +103,7 @@
   .letter-btn.off { opacity: 0; pointer-events: none; }
 
   .toast {
-    position: fixed; left: 50%; top: 28px; transform: translate(-50%, -12px); z-index: 9;
+    position: fixed; left: 50%; top: 28px; transform: translate(-50%, -12px); z-index: 11;
     padding: 12px 24px; border-radius: 999px; max-width: 88vw; text-align: center;
     background: rgba(20,14,6,.75); border: 1px solid rgba(255,220,150,.4);
     color: #ffe9b0; font-size: 17px; letter-spacing: .4px;
@@ -168,7 +156,7 @@
   .ded-close:hover { background: rgba(255,215,120,.14); border-color: rgba(255,220,150,.9); }
 
   .letter, .card {
-    position: fixed; inset: 0; z-index: 8; display: flex; align-items: center; justify-content: center;
+    position: fixed; inset: 0; z-index: 13; display: flex; align-items: center; justify-content: center;
     padding: 20px; opacity: 0; pointer-events: none; background: rgba(4,6,12,0);
     transition: opacity .6s ease, background .6s ease;
   }
@@ -208,7 +196,7 @@
   .letter-close:hover, .card-close:hover { background: rgba(184,121,31,.14); }
 
   .loves {
-    position: fixed; inset: 0; z-index: 11; display: flex; align-items: center; justify-content: center;
+    position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center;
     pointer-events: none; opacity: 0; transition: opacity 2.6s ease; text-align: center; padding: 24px;
     background: radial-gradient(ellipse 85% 55% at 50% 50%,
       rgba(3,6,12,.76) 0%, rgba(3,6,12,.6) 42%, rgba(3,6,12,.22) 74%, rgba(3,6,12,0) 100%);
@@ -229,6 +217,7 @@
 
   .closing {
     position: fixed; left: 50%; bottom: 28%; transform: translate(-50%, 10px); z-index: 11;
+    max-width: 88vw;
     pointer-events: none; text-align: center; font-family: 'Cormorant Garamond', Georgia, serif;
     font-style: italic; font-size: clamp(18px, 5vw, 30px); color: rgba(255,242,210,.95);
     padding: 10px 22px; border-radius: 999px; background: rgba(6,8,14,.5);
@@ -342,7 +331,6 @@
   }
 
   @media (max-width: 600px) {
-    .hint { bottom: 74px; }
     .toast { top: 76px; max-width: 84vw; font-size: 16px; padding: 11px 18px; }
     /* si no, "volver a ver" choca con "abrir carta" en pantallas estrechas */
     .endbar { bottom: 78px; }
@@ -406,7 +394,6 @@
     <button class="intro-btn" id="introBtn">toca para empezar</button>
   </div>
 </div>
-<div class="hint" id="hint"></div>
 <button class="settings" id="settings" title="ajustes" aria-label="ajustes" aria-expanded="false">
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
 </button>
@@ -743,7 +730,7 @@
 
   function makePollen() {
     pollen = [];
-    const n = q(Math.round(W / 16) + 40);
+    const n = q(Math.round(clamp(W / 10, 30, 105)));
     for (let i = 0; i < n; i++) {
       pollen.push({
         x: rand(0, W), y: rand(horizon * 0.45, H), r: rand(0.8, 2.6),
@@ -755,7 +742,7 @@
 
   function makeFireflies() {
     fireflies = [];
-    const n = q(Math.round(W / 60) + 18);
+    const n = q(Math.round(clamp(W / 28, 14, 46)));
     for (let i = 0; i < n; i++) {
       fireflies.push({
         x: rand(0, W), y: rand(horizon * 0.8, H - 20), r: rand(1.4, 3.2),
@@ -2092,6 +2079,7 @@
       if (b.life >= b.max) { bursts.splice(i, 1); continue; }
       b.vy += 90 * dt; b.vx += wind * 30 * dt; b.x += b.vx * dt; b.y += b.vy * dt; b.rot += b.vr * dt * 60;
     }
+    if (bursts.length > 600) bursts.splice(0, bursts.length - 600);
   }
 
   function updateHearts(dt) {
@@ -2285,25 +2273,70 @@
 
   /* ================= toast / letter / card ================= */
 
-  let toastTimer = null, pendingToast = null, panelOpen = false;
+  /* Una sola voz: todo lo que la web le dice pasa por aqui, de uno en uno
+     y siempre en el mismo sitio. Antes habia dos canales (pistas abajo,
+     avisos arriba) que se pisaban entre ellos. */
+  const MSG_GAP = 800;
+  /* un mensaje largo necesita mas tiempo que uno corto para leerse */
+  const msgDuration = m => clamp(2800 + m.length * 55, 3800, 7400);
+  let toastTimer = null, gapTimer = null, pendingToast = null, panelOpen = false;
+  let msgQueue = [], showingMsg = false, showingHint = false;
   const toastEl = document.getElementById("toast");
+
   function dialogOpen() {
     return panelOpen || lovesEl.classList.contains("show") || (dedEl.classList.contains("show") && !dedEl.classList.contains("hidden")) || letterEl.classList.contains("show") || cardEl.classList.contains("show");
   }
-  function showToast(msg) {
-    if (dialogOpen()) { pendingToast = msg; return; }
+
+  function presentMsg(msg, isHint) {
+    showingMsg = true;
+    showingHint = !!isHint;
     toastEl.textContent = msg;
     toastEl.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toastEl.classList.remove("show"), 4800);
-  }
-  function flushToast() {
-    if (!pendingToast) return;
-    const m = pendingToast; pendingToast = null;
-    setTimeout(() => showToast(m), 500);
+    toastTimer = setTimeout(() => {
+      toastEl.classList.remove("show");
+      showingMsg = false;
+      clearTimeout(gapTimer);
+      gapTimer = setTimeout(nextMsg, MSG_GAP);
+    }, msgDuration(msg));
   }
 
-  const hintEl = document.getElementById("hint");
+  function nextMsg() {
+    if (showingMsg || dialogOpen()) return;
+    const m = msgQueue.shift();
+    if (m) presentMsg(m, false);
+  }
+
+  /* isHint = ambiente. Lo que ella provoca manda sobre una simple pista. */
+  function showToast(msg, isHint) {
+    if (!msg) return;
+    if (dialogOpen()) { if (!isHint) pendingToast = msg; return; }
+    if (showingMsg) {
+      if (isHint) return;                                   /* las pistas no hacen cola */
+      if (showingHint) { presentMsg(msg, false); return; }  /* una pista cede su turno */
+      if (msgQueue[msgQueue.length - 1] !== msg) msgQueue.push(msg);
+      if (msgQueue.length > 2) msgQueue.splice(0, msgQueue.length - 2);
+      return;
+    }
+    presentMsg(msg, isHint);
+  }
+
+  /* aparta lo que haya en pantalla; con requeue vuelve despues */
+  function hideMsgNow(requeue) {
+    if (requeue && !showingHint && toastEl.classList.contains("show") && !pendingToast) pendingToast = toastEl.textContent;
+    toastEl.classList.remove("show");
+    clearTimeout(toastTimer); clearTimeout(gapTimer);
+    showingMsg = false; showingHint = false;
+  }
+
+  function flushToast() {
+    const m = pendingToast; pendingToast = null;
+    clearTimeout(gapTimer);
+    gapTimer = setTimeout(() => { if (m) showToast(m); else nextMsg(); }, 600);
+  }
+
+  function msgChannelFree() { return !showingMsg && !msgQueue.length && !pendingToast && !dialogOpen(); }
+
   const isTouch = window.matchMedia("(hover: none)").matches || window.innerWidth < 600;
   const HINTS = isTouch
     ? ["toca donde quieras: cada toque hace nacer una flor",
@@ -2320,18 +2353,14 @@
   let hintIdx = 0, hintTimer = null, hintActive = true;
   function nextHint() {
     if (!hintActive || hintIdx >= HINTS.length) return;
-    hintEl.textContent = HINTS[hintIdx];
-    hintEl.classList.add("show");
-    hintTimer = setTimeout(() => {
-      hintEl.classList.remove("show");
-      hintIdx++;
-      if (hintIdx < HINTS.length) hintTimer = setTimeout(nextHint, 1600);
-    }, 4200);
+    const libre = msgChannelFree();
+    if (libre) { showToast(HINTS[hintIdx], true); hintIdx++; }
+    clearTimeout(hintTimer);
+    hintTimer = setTimeout(nextHint, libre ? 8000 : 2500);
   }
   function stopHints() {
     hintActive = false;
     clearTimeout(hintTimer);
-    hintEl.classList.remove("show");
   }
 
   const lovesEl = document.getElementById("loves");
@@ -2345,11 +2374,7 @@
     loveShown = true;
     stopHints();
     /* si habia un aviso en pantalla, lo apartamos y vuelve despues del climax */
-    if (toastEl.classList.contains("show")) {
-      if (!pendingToast) pendingToast = toastEl.textContent;
-      toastEl.classList.remove("show");
-      clearTimeout(toastTimer);
-    }
+    hideMsgNow(true);
     document.getElementById("lovesText").textContent = GIFT.teQuiero;
     lovesEl.classList.add("show");
     playChime();
@@ -2454,7 +2479,24 @@
     letterPage = ni;
     renderLetter();
   }
+  /* si abre la carta o un recuerdo mientras corre el final, no se lo pisamos:
+     lo apartamos y el "te quiero" vuelve a empezar cuando cierre */
+  function pauseFinale() {
+    if (lovesEl.classList.contains("show")) {
+      lovesEl.classList.remove("show");
+      clearTimeout(loveHideTimer);
+      loveShown = false;
+      lovePending = true;
+    }
+    if (closingEl.classList.contains("show")) {
+      closingEl.classList.remove("show");
+      clearTimeout(closeTimer);
+      endbarEl.classList.add("show");
+    }
+  }
+
   function openLetter() {
+    pauseFinale();
     letterOpened = true; letterBtn.classList.remove("beat");
     lastFocus = document.activeElement;
     letterEl.classList.add("show"); renderLetter();
@@ -2495,6 +2537,7 @@
 
   const cardEl = document.getElementById("card");
   function showCard(title, text) {
+    pauseFinale();
     const t = document.getElementById("cardTitle"), b = document.getElementById("cardBody");
     lastFocus = document.activeElement;
     t.textContent = title; b.style.opacity = 0;
@@ -2506,6 +2549,7 @@
     cardEl.classList.remove("show");
     if (lastFocus && lastFocus.focus) lastFocus.focus();
     flushToast();
+    setTimeout(tryShowLove, 900);
   }
   cardEl.addEventListener("pointerdown", e => e.stopPropagation());
   document.getElementById("cardClose").addEventListener("click", closeCard);
@@ -2792,9 +2836,21 @@
   const introEl = document.getElementById("intro");
   const introBtn = document.getElementById("introBtn");
   let started = false;
+  /* las de base crecian solas detras de la intro y las ya plantadas aparecian
+     hechas: ahora el jardin entero florece de una vez, justo al entrar ella */
+  function bloomAll() {
+    for (const f of flowers) {
+      f.birth = t;
+      f.delay = 0.25 + (f.x / (W || 1)) * 1.15 + rand(0, 0.4);
+      f.growth = 0;
+      f.bloomed = false;
+    }
+  }
+
   function startExperience() {
     if (started || !gateOpen) return;
     started = true;
+    bloomAll();
     introEl.classList.add("hide");
     setTimeout(() => { if (introEl.parentNode) introEl.remove(); }, 1700);
     setMusic(musicPref);
@@ -2826,7 +2882,7 @@
     panelEl.classList.toggle("open", open);
     settingsBtn.classList.toggle("on", open);
     settingsBtn.setAttribute("aria-expanded", open ? "true" : "false");
-    if (open) { toastEl.classList.remove("show"); clearTimeout(toastTimer); }
+    if (open) hideMsgNow(true);
     else flushToast();
   }
   settingsBtn.addEventListener("pointerdown", e => e.stopPropagation());
