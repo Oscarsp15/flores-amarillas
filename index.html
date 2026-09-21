@@ -111,6 +111,8 @@
     opacity: 0; pointer-events: none; transition: opacity .5s ease, transform .5s ease;
   }
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  /* la linea que dirige es mas sobria; los avisos sueltos destacan sobre ella */
+  .toast.story { background: rgba(14,12,8,.6); border-color: rgba(255,220,150,.28); color: rgba(255,238,200,.92); }
 
   .dedication {
     position: fixed; inset: 0; z-index: 5; pointer-events: none;
@@ -314,6 +316,7 @@
   .surprise:hover { background: rgba(255,215,120,.16); }
   .surprise:active { transform: scale(.9); }
   .surprise:not(.used) { animation: pulse 3s ease-in-out infinite; }
+  .surprise.off { opacity: 0; pointer-events: none; transform: scale(.8); }
 
   @media (hover: hover) and (pointer: fine) {
     canvas { cursor: none; }
@@ -404,7 +407,7 @@
   <div class="prow"><span>guardar imagen</span><button class="pbtn" id="snap" title="guardar una foto del jardín" aria-label="guardar una foto del jardín"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/></svg></button></div>
   <div class="prow"><span id="resetLabel">reiniciar jardín</span><button class="pbtn" id="reset" title="quitar las flores plantadas" aria-label="quitar las flores plantadas"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button></div>
 </div>
-<button class="surprise" id="surprise" title="sorpresa" aria-label="sorpresa">
+<button class="surprise off" id="surprise" title="sorpresa" aria-label="sorpresa">
   <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.7 5.6L19.5 9l-5.8 1.4L12 16l-1.7-5.6L4.5 9l5.8-1.4z"/><circle cx="19" cy="18" r="1.6"/><circle cx="6" cy="17" r="1.2"/></svg>
 </button>
 <div class="days" id="days"></div>
@@ -559,6 +562,9 @@
     timer = setInterval(tick, 250);
   }
 
+  let guionVisto = false;
+  try { guionVisto = localStorage.getItem("floresGuion") === "1"; } catch (e) {}
+
   const aperturaT = aperturaDate();
   /* ?abrir (o #abrir) en la URL salta la espera, para poder revisarla antes */
   const saltarEspera = /(^|[?&#])abrir/.test(location.search + location.hash);
@@ -572,6 +578,8 @@
   let mouseX = 0.5, mouseY = 0.5, parX = 0, parY = 0;
   let curX = -100, curY = -100, curTX = -100, curTY = -100;
   let dayClock = 0, dayT = 0.12, pal = null;
+  /* el guion manda sobre el reloj: la tarde se sostiene y la noche tambien */
+  let daySpeed = 0.15;
   const DAY_LEN = 150;
 
   /* every random draw goes through a seeded generator: the same seed rebuilds
@@ -631,7 +639,7 @@
   let rockets = [], sparks = [], fireworkQueue = 0, fireworkTimer = 0;
   let memories = [], nameConst = [], birds = [], bees = [], ladybugs = [];
   let lanterns = [], dragonflies = [], koi = [], pond = null, garland = null, lanternsReleased = false;
-  let flowersPlanted = 0, milestoneIdx = 0, nightHintShown = false, nameHintShown = false, finaleDone = false;
+  let flowersPlanted = 0, milestoneIdx = 0, finaleDone = false;
   let returning = false;   /* ya habia estado aqui: sus flores siguen plantadas */
   let soft = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const q = (n) => Math.max(1, Math.round(n * (soft ? 0.5 : 1)));
@@ -1971,18 +1979,9 @@
   }
 
   function updateDay(dt) {
-    dayClock += dt;
+    dayClock += dt * daySpeed;
     dayT = (0.12 + dayClock / DAY_LEN) % 1;
     pal = getPalette(dayT);
-    /* dos momentos distintos: lo primero que tiene que ver es su nombre */
-    if (!nameHintShown && pal.star > 0.6 && nameConst.length) {
-      nameHintShown = true;
-      showToast("mira hacia arriba: tu nombre está escrito en las estrellas");
-    }
-    if (!nightHintShown && pal.star > 0.92 && memories.length) {
-      nightHintShown = true;
-      showToast("y las estrellas rosadas guardan recuerdos: tócalas");
-    }
     if (!lanternsReleased && pal.star > 0.4) {
       lanternsReleased = true;
       for (let i = 0; i < 6; i++) spawnLantern();
@@ -2132,6 +2131,7 @@
     updateDay(dt); updateWind(dt); updateParallax(dt); updateFlowers();
     updatePollen(dt); updateFireflies(dt); updateButterflies(dt); updateBees(dt); updateBirds(dt); updateLadybugs(dt); updateDragonflies(dt); updateLanterns(dt);
     updateFalling(dt); updateBursts(dt); updateHearts(dt); updateTrail(dt); updateFireworks(dt);
+    updateGuion(dt);
   }
 
   function render(dt) {
@@ -2281,6 +2281,9 @@
   const msgDuration = m => clamp(2800 + m.length * 55, 3800, 7400);
   let toastTimer = null, gapTimer = null, pendingToast = null, panelOpen = false;
   let msgQueue = [], showingMsg = false, showingHint = false;
+  /* storyMsg es la linea del acto en curso: se queda mientras le toca a ella
+     hacer algo. Los avisos sueltos pasan por delante y luego vuelve. */
+  let storyMsg = null, showingStory = false;
   const toastEl = document.getElementById("toast");
 
   function dialogOpen() {
@@ -2290,6 +2293,8 @@
   function presentMsg(msg, isHint) {
     showingMsg = true;
     showingHint = !!isHint;
+    showingStory = false;
+    toastEl.classList.remove("story");
     toastEl.textContent = msg;
     toastEl.classList.add("show");
     clearTimeout(toastTimer);
@@ -2301,16 +2306,41 @@
     }, msgDuration(msg));
   }
 
+  function presentStory() {
+    if (!storyMsg || dialogOpen()) return;
+    clearTimeout(toastTimer); clearTimeout(gapTimer);
+    showingMsg = false; showingHint = false; showingStory = true;
+    toastEl.textContent = storyMsg;
+    toastEl.classList.add("show", "story");
+  }
+
+  function setStory(msg) {
+    storyMsg = msg;
+    if (!showingMsg) presentStory();
+  }
+
+  function clearStory() {
+    storyMsg = null;
+    if (showingStory) {
+      showingStory = false;
+      toastEl.classList.remove("show", "story");
+      clearTimeout(gapTimer);
+      gapTimer = setTimeout(nextMsg, MSG_GAP);
+    }
+  }
+
   function nextMsg() {
     if (showingMsg || dialogOpen()) return;
     const m = msgQueue.shift();
-    if (m) presentMsg(m, false);
+    if (m) { presentMsg(m, false); return; }
+    presentStory();
   }
 
   /* isHint = ambiente. Lo que ella provoca manda sobre una simple pista. */
   function showToast(msg, isHint) {
     if (!msg) return;
     if (dialogOpen()) { if (!isHint) pendingToast = msg; return; }
+    if (showingStory) { presentMsg(msg, isHint); return; }   /* la linea del acto cede y vuelve */
     if (showingMsg) {
       if (isHint) return;                                   /* las pistas no hacen cola */
       if (showingHint) { presentMsg(msg, false); return; }  /* una pista cede su turno */
@@ -2323,46 +2353,20 @@
 
   /* aparta lo que haya en pantalla; con requeue vuelve despues */
   function hideMsgNow(requeue) {
-    if (requeue && !showingHint && toastEl.classList.contains("show") && !pendingToast) pendingToast = toastEl.textContent;
-    toastEl.classList.remove("show");
+    if (requeue && !showingHint && !showingStory && toastEl.classList.contains("show") && !pendingToast) pendingToast = toastEl.textContent;
+    toastEl.classList.remove("show", "story");
     clearTimeout(toastTimer); clearTimeout(gapTimer);
-    showingMsg = false; showingHint = false;
+    showingMsg = false; showingHint = false; showingStory = false;
   }
 
   function flushToast() {
     const m = pendingToast; pendingToast = null;
     clearTimeout(gapTimer);
-    gapTimer = setTimeout(() => { if (m) showToast(m); else nextMsg(); }, 600);
+    gapTimer = setTimeout(() => { if (m) showToast(m); else nextMsg(); }, 700);
   }
 
-  function msgChannelFree() { return !showingMsg && !msgQueue.length && !pendingToast && !dialogOpen(); }
 
   const isTouch = window.matchMedia("(hover: none)").matches || window.innerWidth < 600;
-  const HINTS = isTouch
-    ? ["toca donde quieras: cada toque hace nacer una flor",
-       "si pasa una estrella fugaz, atrápala y pide un deseo",
-       "la estrellita de abajo guarda sorpresas",
-       "quédate al anochecer: el cielo tiene algo que decirte",
-       "y cuando quieras, abre la carta"]
-    : ["mueve el cursor: el viento te sigue",
-       "haz clic donde quieras: cada clic hace nacer una flor",
-       "si pasa una estrella fugaz, atrápala y pide un deseo",
-       "la estrellita de abajo guarda sorpresas",
-       "quédate al anochecer: el cielo tiene algo que decirte",
-       "y cuando quieras, abre la carta"];
-  let hintIdx = 0, hintTimer = null, hintActive = true;
-  function nextHint() {
-    if (!hintActive || hintIdx >= HINTS.length) return;
-    const libre = msgChannelFree();
-    if (libre) { showToast(HINTS[hintIdx], true); hintIdx++; }
-    clearTimeout(hintTimer);
-    hintTimer = setTimeout(nextHint, libre ? 8000 : 2500);
-  }
-  function stopHints() {
-    hintActive = false;
-    clearTimeout(hintTimer);
-  }
-
   const lovesEl = document.getElementById("loves");
   const closingEl = document.getElementById("closing");
   const replayEl = document.getElementById("replay");
@@ -2372,7 +2376,6 @@
   function showLove() {
     if (loveShown) return;
     loveShown = true;
-    stopHints();
     /* si habia un aviso en pantalla, lo apartamos y vuelve despues del climax */
     hideMsgNow(true);
     document.getElementById("lovesText").textContent = GIFT.teQuiero;
@@ -2393,6 +2396,7 @@
     closeTimer = setTimeout(() => {
       closingEl.classList.remove("show");
       endbarEl.classList.add("show");
+      showToast("el jardín se queda contigo: la estrellita de abajo guarda sorpresas");
     }, 6000);
   }
   function replayFinale() {
@@ -2441,7 +2445,7 @@
   }
 
   const letterEl = document.getElementById("letter");
-  let letterPage = 0, letterOpened = false, lastFocus = null, letterDir = 1;
+  let letterPage = 0, lastFocus = null, letterDir = 1;
 
   function buildLetter() {
     document.getElementById("letterHead").textContent = "Para " + GIFT.para;
@@ -2497,7 +2501,7 @@
 
   function openLetter() {
     pauseFinale();
-    letterOpened = true; letterBtn.classList.remove("beat");
+    letterBtn.classList.remove("beat");
     lastFocus = document.activeElement;
     letterEl.classList.add("show"); renderLetter();
     letterEl.focus();
@@ -2578,8 +2582,6 @@
 
   /* ================= interaction ================= */
 
-  let firstInteract = false;
-
   function checkMilestones() {
     while (milestoneIdx < GIFT.logros.length && flowersPlanted >= GIFT.logros[milestoneIdx].n) {
       showToast(GIFT.logros[milestoneIdx].texto);
@@ -2620,6 +2622,7 @@
     plantedSpots.push({ x: clientX / W, y: baseY / H });
     if (plantedSpots.length > 120) plantedSpots.shift();
     flowersPlanted++;
+    actPlanted++;
     updateChip();
     checkMilestones();
     saveGarden();
@@ -2644,8 +2647,8 @@
         shooting.splice(i, 1);
         addBurst(s.x, s.y, 44, 48, 190);
         for (let k = 0; k < 16; k++) spawnHeart(s.x, s.y);
+        wishDone = true;
         showToast(GIFT.deseo); playChime();
-        if (!firstInteract) { firstInteract = true; stopHints(); }
         return;
       }
     }
@@ -2658,8 +2661,7 @@
             m.read = true; playChime();
             if (memories.every(x => x.read)) { launchFireworks(14); showToast("guardaste todos los recuerdos en el corazón"); lovePending = true; setTimeout(tryShowLove, 3200); }
           }
-          if (!firstInteract) { firstInteract = true; stopHints(); }
-          return;
+            return;
         }
       }
     }
@@ -2669,7 +2671,6 @@
     } else {
       addBurst(e.clientX, e.clientY, 7, 48, 45);
     }
-    if (!firstInteract) { firstInteract = true; stopHints(); }
   });
   window.addEventListener("touchmove", e => {
     if (e.touches[0]) pointerWind(e.touches[0].clientX, e.touches[0].clientY);
@@ -2727,23 +2728,158 @@
   dedClose.addEventListener("click", e => {
     e.stopPropagation();
     dedEl.classList.add("hidden");
-    letterBtn.classList.remove("off");
     if (pendingToast) flushToast();
-    else if (returning) {
-      showToast("tus flores siguen aquí: te estaban esperando");
-      setTimeout(() => showToast("y la carta también, ahí abajo"), 7000);
-    } else {
-      showToast("ahí abajo te dejé una carta, para cuando quieras");
-    }
     setTimeout(tryShowLove, 1400);
-    setTimeout(nextHint, returning ? 9000 : 2200);
-    setTimeout(() => {
-      if (!letterOpened) {
-        letterBtn.classList.add("beat");
-        showToast("hay una carta esperándote... ábrela y léela hasta el final");
-      }
-    }, 42000);
+    if (freeMode) {
+      /* ya vivio el guion otro dia: el jardin es suyo desde el primer momento */
+      letterBtn.classList.remove("off");
+      surpriseBtn.classList.remove("off");
+      setTimeout(() => showToast(returning
+        ? "tus flores siguen aquí: te estaban esperando"
+        : "el jardín es tuyo: planta, mira el cielo y abre la carta cuando quieras"), 1200);
+    } else {
+      setTimeout(startGuion, 1600);
+    }
   });
+
+  /* ================= el guion =================
+     Sin esto ella abre la carta lo primero y se pierde el resto. La web la
+     lleva de la mano: un acto cada vez, con una linea arriba que dice que
+     toca ahora. Cada acto termina cuando ella lo hace, o solo, para que
+     nunca se quede atascada. */
+
+  let actIdx = -1, actT = 0, actPlanted = 0, wishDone = false, freeMode = false, guionOn = false;
+  let actReady = false, actTimer = null;
+
+  const ACTS = [
+    {
+      id: "sembrar",
+      enter() {
+        daySpeed = 0.15;
+        setStory(isTouch
+          ? "toca el campo donde quieras: cada toque hace nacer una flor"
+          : "haz clic en el campo: cada clic hace nacer una flor");
+      },
+      tick(T) {
+        /* si se queda mirando sin tocar, un empujoncito */
+        if (T > 22 && actPlanted === 0 && !this.empujon) {
+          this.empujon = true;
+          showToast("de verdad: toca la pantalla. no se rompe nada");
+        }
+      },
+      done: () => actPlanted >= 6,
+      max: 70,
+      exit() { showToast(actPlanted ? "mira lo que acabas de hacer crecer" : "no pasa nada, el campo te espera igual"); }
+    },
+    {
+      id: "tarde",
+      enter() { setStory("ahora no hagas nada: quédate mirando cómo cae la tarde"); daySpeed = 0.9; },
+      done: () => pal.star > 0.62,
+      max: 45,
+      exit() { daySpeed = 0.25; }
+    },
+    {
+      id: "nombre",
+      enter() { setStory("mira hacia arriba"); this.said = false; },
+      tick(T) {
+        if (T > 4.5 && !this.said) {
+          this.said = true;
+          showToast("tu nombre, escrito con estrellas. lleva ahí toda la noche");
+        }
+      },
+      max: 16
+    },
+    {
+      id: "recuerdos",
+      enter() { setStory("las estrellas rosadas guardan recuerdos: tócalas, una por una"); this.empujon = false; },
+      tick(T) {
+        if (T > 30 && !this.empujon && memories.length && !memories.some(m => m.read)) {
+          this.empujon = true;
+          showToast("están ahí arriba, entre el nombre y los farolillos");
+        }
+      },
+      done: () => memories.length > 0 && memories.every(m => m.read),
+      max: 85
+    },
+    {
+      id: "deseo",
+      enter() { setStory("va a cruzar una estrella fugaz: atrápala y pídele un deseo"); wishDone = false; this.last = -9; },
+      tick(T) {
+        if (!shooting.length && T - this.last > 5) {
+          this.last = T;
+          for (let k = 0; k < 3; k++) spawnShootingStar();
+        }
+      },
+      done: () => wishDone,
+      max: 55
+    },
+    {
+      id: "carta",
+      enter() {
+        letterBtn.classList.remove("off");
+        letterBtn.classList.add("beat");
+        setStory("y ahora sí: abre la carta y léela hasta el final");
+      },
+      done: () => finaleDone,
+      max: 900,
+      exit() { letterBtn.classList.remove("beat"); }
+    }
+  ];
+
+  function nextAct() {
+    const prev = ACTS[actIdx];
+    if (prev) { try { if (prev.exit) prev.exit(); } catch (e) {} }
+    clearStory();
+    actIdx++;
+    actT = 0;
+    actReady = false;
+    const a = ACTS[actIdx];
+    if (!a) { goFree(); return; }
+    /* un respiro entre acto y acto: se nota que alguien dirige */
+    clearTimeout(actTimer);
+    actTimer = setTimeout(() => {
+      if (freeMode || ACTS[actIdx] !== a) return;
+      try { if (a.enter) a.enter(); } catch (e) { goFree(); return; }
+      actT = 0;
+      actReady = true;
+    }, 1200);
+  }
+
+  function startGuion() {
+    if (freeMode || guionOn) return;
+    guionOn = true;
+    actIdx = -1;
+    nextAct();
+    /* red de seguridad: pase lo que pase, a los 9 minutos todo queda abierto */
+    setTimeout(goFree, 540000);
+  }
+
+  function goFree() {
+    if (freeMode) return;
+    freeMode = true;
+    guionOn = false;
+    actIdx = ACTS.length;
+    daySpeed = 1;
+    clearStory();
+    /* por id, no por las constantes: goFree puede correr antes de que se declaren */
+    const lb = document.getElementById("letterBtn"), sb = document.getElementById("surprise");
+    if (lb) lb.classList.remove("off");
+    if (sb) sb.classList.remove("off");
+    try { localStorage.setItem("floresGuion", "1"); } catch (e) {}
+  }
+
+  function updateGuion(dt) {
+    if (!guionOn || freeMode || !actReady) return;
+    const a = ACTS[actIdx];
+    if (!a) { goFree(); return; }
+    actT += dt;
+    let fin = false;
+    try {
+      if (a.tick) a.tick(actT);
+      fin = (a.done && a.done()) || (a.max && actT >= a.max);
+    } catch (e) { fin = true; }
+    if (fin) nextAct();
+  }
 
   /* ================= loop / setup ================= */
 
@@ -2829,6 +2965,8 @@
   buildLetter();
   loadGarden();
   returning = flowersPlanted > 0;
+  /* ?libre salta el guion; tambien se salta si ya lo vivio entero otro dia */
+  if (guionVisto || /(^|[?&#])libre/.test(location.search + location.hash)) goFree();
   updateChip();
   resize();
   requestAnimationFrame(loop);
@@ -2959,11 +3097,12 @@
     }
     disarmReset();
     plantedSpots = []; flowersPlanted = 0; milestoneIdx = 0;
-    try { localStorage.removeItem("floresGarden"); } catch (e) {}
+    /* reiniciar es empezar de cero de verdad: tambien vuelve el guion */
+    try { localStorage.removeItem("floresGarden"); localStorage.removeItem("floresGuion"); } catch (e) {}
     build();
     updateChip();
     setPanel(false);
-    showToast("el jardín vuelve a empezar");
+    showToast("el jardín vuelve a empezar: recarga para verlo desde el principio");
   }
   resetBtn.addEventListener("pointerdown", e => e.stopPropagation());
   resetBtn.addEventListener("click", e => { e.stopPropagation(); resetGarden(); });
